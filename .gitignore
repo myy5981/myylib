@@ -1,0 +1,6 @@
+.vscode
+test
+build
+debug
+GNUmakefile
+obj
