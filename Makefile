@@ -1,7 +1,7 @@
 CC = gcc -m64
 CFLAGS = -Wall -Werror -I./include -std=c99 -c
 
-OBJ = obj/endian.o obj/hex.o obj/sm3_hmac.o obj/sm3_kdf.o obj/sm3.o obj/sm4.o obj/url_base64.o
+OBJ = obj/endian.o obj/hex.o obj/sm3_hmac.o obj/sm3_kdf.o obj/sm3.o obj/sm4.o obj/url_base64.o obj/algorithm.o
 
 default: mkdir build
 
