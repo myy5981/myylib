@@ -1,6 +1,8 @@
 .vscode
 lib
-build
-debug
-GNUmakefile
 obj
+build
+
+debug/*
+!debug/debug.c
+!debug/Makefile
