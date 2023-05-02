@@ -1,0 +1,10 @@
+{
+    "tasks": [
+        {
+            "type": "shell",
+            "label": "myylibc debug",
+            "command": "make -C ./debug/"
+        }
+    ],
+    "version": "2.0.0"
+}

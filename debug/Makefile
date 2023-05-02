@@ -1,5 +1,5 @@
 CC = gcc -m64
-CFLAGS = -Wall -Werror -I../include -std=c99 -c
+CFLAGS = -Wall -Werror -I../include -g -std=c99 -c
 
 default: build debug
 
@@ -15,4 +15,4 @@ clean:
 
 .PHONY: build
 build: 
-	make -C ../
+	make debug -C ../
