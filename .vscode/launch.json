@@ -6,11 +6,17 @@
     "configurations": [
         {
             "name": "myylibc debug",
+            "request": "launch",
             "type": "cppdbg",
             "program": "${workspaceFolder}/debug/debug",
             "preLaunchTask": "myylibc debug",
-            "request": "launch",
-            "cwd": "${workspaceFolder}"
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "LD_LIBRARY_PATH",
+                    "value": "./lib"
+                }
+            ]
         }
     ]
 }

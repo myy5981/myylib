@@ -4,7 +4,7 @@ CFLAGS = -Wall -Werror -I../include -g -std=c99 -c
 default: build debug
 
 debug: debug.o
-	gcc -L../lib $^ -o $@ -Wl,-Bstatic -lmyy -Wl,-Bdynamic
+	gcc -L../lib $^ -o $@ -lmyy
 
 debug.o: debug.c
 	$(CC) $(CFLAGS) $^ -o $@
