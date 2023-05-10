@@ -1,6 +1,6 @@
 lib
 obj
-build
+bin
 
 debug/*
 !debug/debug.c
