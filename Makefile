@@ -1,6 +1,8 @@
+.DEFAULT_GOAL := static
+
 CC = gcc -m64
 CLEVEL = -O2
-CFLAGS = -Wall -Werror -I./include $(CLEVEL) -std=c99 -c
+CFLAGS = -c -Wall -Werror -std=c99 -I./include $(CLEVEL)
 
 OBJ = obj/endian.o\
 		obj/hex.o\
@@ -12,25 +14,34 @@ OBJ = obj/endian.o\
 		obj/algorithm.o\
 		obj/bignum.o
 
-default: mkdir build
-
+.PHONY: debug
 debug: CLEVEL = -g -fdiagnostics-color=always
-debug: default
+debug: $(.DEFAULT_GOAL)
 
-build: lib/libmyy.a lib/libmyy.so
+.PHONY: release
+release: $(.DEFAULT_GOAL)
+
+.PHONY: static
+static: mkdir lib/libmyy.a
+
+.PHONY: dynamic
+dynamic: mkdir lib/libmyy.so
 
 lib/libmyy.a: $(OBJ)
-	ar rcs lib/libmyy.a $?
+	ar rcs $@ $?
 
-lib/libmyy.so: $(OBJ)
-	gcc -fPIC -shared $^ -o lib/libmyy.so
+lib/libmyy.so: $(OBJ:.o=.pic.o)
+	ld -L./lib -shared $^ -o $@
 
 obj/%.o: src/%.c
 	$(CC) $(CFLAGS) $^ -o $@
 
+obj/%.pic.o: src/%.c
+	$(CC) $(CFLAGS) -fPIC $^ -o $@
+
 .PHONY: clean
 clean: 
-	rm -rf bin/** obj/** lib/**
+	rm -rf bin obj lib
 
 .PHONY: mkdir
 mkdir: 
