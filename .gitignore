@@ -2,6 +2,8 @@ lib
 obj
 bin
 
+test
+
 debug/*
 !debug/debug.c
 !debug/Makefile

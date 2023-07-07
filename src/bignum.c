@@ -1,7 +1,7 @@
 #include <myy/bignum.h>
 
-void bn_add_256(BN_256 r, BN_256 a, BN_256 b){
-    __asm__ volatile (
+void __bn_256_add(BN_256 r, const BN_256 a, const BN_256 b){
+    asm volatile (
         "movl 28(%1), %%eax\n\t"
         "addl 28(%2), %%eax\n\t"
         "movl %%eax, 28(%0)\n\t"
@@ -31,8 +31,44 @@ void bn_add_256(BN_256 r, BN_256 a, BN_256 b){
     );
 }
 
-void bn_sub_256(BN_256 r, BN_256 a, BN_256 b){
-    __asm__ volatile (
+int  bn_256_add(BN_256 r, const BN_256 a, const BN_256 b){
+    int f=0;
+    asm volatile (
+        "movl 28(%2), %%eax\n\t"
+        "addl 28(%3), %%eax\n\t"
+        "movl %%eax, 28(%1)\n\t"
+        "movl 24(%2), %%eax\n\t"
+        "adcl 24(%3), %%eax\n\t"
+        "movl %%eax, 24(%1)\n\t"
+        "movl 20(%2), %%eax\n\t"
+        "adcl 20(%3), %%eax\n\t"
+        "movl %%eax, 20(%1)\n\t"
+        "movl 16(%2), %%eax\n\t"
+        "adcl 16(%3), %%eax\n\t"
+        "movl %%eax, 16(%1)\n\t"
+        "movl 12(%2), %%eax\n\t"
+        "adcl 12(%3), %%eax\n\t"
+        "movl %%eax, 12(%1)\n\t"
+        "movl 8(%2), %%eax\n\t"
+        "adcl 8(%3), %%eax\n\t"
+        "movl %%eax, 8(%1)\n\t"
+        "movl 4(%2), %%eax\n\t"
+        "adcl 4(%3), %%eax\n\t"
+        "movl %%eax, 4(%1)\n\t"
+        "movl (%2), %%eax\n\t"
+        "adcl (%3), %%eax\n\t"
+        "movl %%eax, (%1)\n\t"
+        "movl $0, %0\n\t"
+        "adcl $0, %0\n\t"
+        :"=r"(f)
+        :"r"(r),"r"(a),"r"(b)
+        :"eax"
+    );
+    return f;
+}
+
+void bn_256_sub(BN_256 r, const BN_256 a, const BN_256 b){
+    asm volatile (
         "movl 28(%1), %%eax\n\t"
         "subl 28(%2), %%eax\n\t"
         "movl %%eax, 28(%0)\n\t"
@@ -62,7 +98,15 @@ void bn_sub_256(BN_256 r, BN_256 a, BN_256 b){
     );
 }
 
-void bn_zero_256(BN_256 bn){
+int bn_256_cmp(const BN_256 a, const BN_256 b){
+    for (int i=0;i<8;i++){
+        if(a[i]>b[i]) return 1;
+        if(a[i]<b[i]) return -1;
+    }
+    return 0;
+}
+
+void bn_256_zero(BN_256 bn){
     bn[0] = 0; bn[1] = 0;
     bn[2] = 0; bn[3] = 0;
     bn[4] = 0; bn[5] = 0;

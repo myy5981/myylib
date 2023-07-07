@@ -1,15 +1,25 @@
 #include <myy/bignum.h>
 #include <stdio.h>
 
+static BN_256 p  = {0x0FFFFFFEu,0xFFFFFFFFu,0xFFFFFFFFu,0xFFFFFFFFu,0xFFFFFFFFu,0x00000000u,0xFFFFFFFFu,0xFFFFFFFFu};
+
 int main(void){
 
+    BN_256 a=BN_ZERO_256;
+    BN_256 b=BN_ZERO_256;
+    // BN_256 c=BN_ZERO_256;
 
-    unsigned int i=1;
-    unsigned int j=0xFFFFFFFC;
-    int k=i-j;
-    printf("%d,%u,%x\n",i,i,i);
-    printf("%d,%u,%x\n",j,j,j);
-    printf("%d,%u,%x\n",k,k,k);
+    char bin[257]={0};
+
+    int i = bn_256_add_with_carry(a,p,p);
+    bn_2_bin_256(a,bin);
+
+    printf("f=%d\n%s\n",i,bin);
+
+    bn_256_add(b,p,p);
+    bn_2_bin_256(b,bin);
+    printf("\n%s\n",bin);
+
 
     // const char* _a="101010010111111111101010100010010100101";
     // const char* _b="101000110100100100010001001001111111111";

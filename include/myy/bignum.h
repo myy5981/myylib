@@ -44,12 +44,18 @@ typedef uint32_t BN_256[8];
                             (n)[6]=((n)[6]<<x)|((n)[7]>>(32-x));\
                             (n)[7]=((n)[7]<<x)
 
-extern void bn_add_256      (BN_256 r, BN_256 a, BN_256 b);
-extern void bn_sub_256      (BN_256 r, BN_256 a, BN_256 b);
+extern void __bn_256_add    (BN_256 r, const BN_256 a, const BN_256 b);
+/**
+ * 如果发生进位则返回1，否则返回0
+*/
+extern int  bn_256_add      (BN_256 r, const BN_256 a, const BN_256 b);
+extern void bn_256_sub      (BN_256 r, const BN_256 a, const BN_256 b);
+extern int  bn_256_cmp      (const BN_256 a, const BN_256 b);
+extern void bn_256_zero     (BN_256 bn);
+
 extern int  bin_2_bn_256    (BN_256 bn, const char* bin);
 extern void bn_2_bin_256    (BN_256 bn, char* bin);
 extern int  hex_2_bn_256    (BN_256 bn, const char* hex);
-extern void bn_zero_256     (BN_256 bn);
 
 #define BN_ZERO_256 {0,0,0,0,0,0,0,0}
 #define BN_ONE_256  {0,0,0,0,0,0,0,1}

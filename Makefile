@@ -1,8 +1,8 @@
 .DEFAULT_GOAL := static
 
-CC = gcc -m64
+CC = gcc
 CLEVEL = -O2
-CFLAGS = -c -Wall -Werror -std=c99 -I./include $(CLEVEL)
+CFLAGS = -c -Wall -Werror -I./include $(CLEVEL)
 
 OBJ = obj/endian.o\
 		obj/hex.o\
