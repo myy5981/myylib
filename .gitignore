@@ -4,6 +4,9 @@ bin
 
 test
 
+util/*
+!util/*.c
+
 debug/*
 !debug/debug.c
 !debug/Makefile
