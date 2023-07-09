@@ -12,7 +12,9 @@ debug.o: debug.c
 .PHONY: clean
 clean:
 	rm -rf debug debug.o
+	make clean -C ../
 
 .PHONY: build
 build: 
 	make debug -C ../
+	cp ../lib/libmyy.so ./

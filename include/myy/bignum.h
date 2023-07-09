@@ -7,6 +7,7 @@ __CPP_BEGIN
 
 //大端存储，高32位存在低索引，低32位存在高索引
 typedef uint32_t BN_256[8];
+typedef uint32_t BN_512[16];
 
 #define bn_256_is_zero(n) (((n)[0]==0)&&\
                                 ((n)[1]==0)&&\
@@ -50,6 +51,7 @@ extern void __bn_256_add    (BN_256 r, const BN_256 a, const BN_256 b);
 */
 extern int  bn_256_add      (BN_256 r, const BN_256 a, const BN_256 b);
 extern void bn_256_sub      (BN_256 r, const BN_256 a, const BN_256 b);
+extern void bn_256_mul      (BN_512 r, BN_256 a, BN_256 b);
 extern int  bn_256_cmp      (const BN_256 a, const BN_256 b);
 extern void bn_256_zero     (BN_256 bn);
 

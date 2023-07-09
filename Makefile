@@ -1,6 +1,8 @@
-.DEFAULT_GOAL := static
+.DEFAULT_GOAL := dynamic
 
-CC = gcc
+CC = gcc -m32
+LINK = gcc -m32
+AR = ar
 CLEVEL = -O2
 CFLAGS = -c -Wall -Werror -I./include $(CLEVEL)
 
@@ -12,7 +14,8 @@ OBJ = obj/endian.o\
 		obj/sm4.o\
 		obj/url_base64.o\
 		obj/algorithm.o\
-		obj/bignum.o
+		obj/bignum.o\
+		obj/bignum_512.o
 
 .PHONY: debug
 debug: CLEVEL = -g -fdiagnostics-color=always
@@ -28,10 +31,10 @@ static: mkdir lib/libmyy.a
 dynamic: mkdir lib/libmyy.so
 
 lib/libmyy.a: $(OBJ)
-	ar rcs $@ $?
+	$(AR) rcs $@ $?
 
 lib/libmyy.so: $(OBJ:.o=.pic.o)
-	ld -L./lib -shared $^ -o $@
+	$(LINK) -shared $^ -o $@
 
 obj/%.o: src/%.c
 	$(CC) $(CFLAGS) $^ -o $@
