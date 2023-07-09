@@ -9,6 +9,10 @@ __CPP_BEGIN
 typedef uint32_t BN_256[8];
 typedef uint32_t BN_512[16];
 
+#define BN_256_INIT(a,b,c,d,e,f,g,h) {0x##a##U,0x##b##U,0x##c##U,0x##d##U,0x##e##U,0x##f##U,0x##g##U,0x##h##U}
+#define BN_256_ZERO {0,0,0,0,0,0,0,0}
+#define BN_256_ONE  {0,0,0,0,0,0,0,1}
+
 #define bn_256_is_zero(n) (((n)[0]==0)&&\
                                 ((n)[1]==0)&&\
                                 ((n)[2]==0)&&\
@@ -55,12 +59,7 @@ extern void bn_256_mul      (BN_512 r, BN_256 a, BN_256 b);
 extern int  bn_256_cmp      (const BN_256 a, const BN_256 b);
 extern void bn_256_zero     (BN_256 bn);
 
-extern int  bin_2_bn_256    (BN_256 bn, const char* bin);
-extern void bn_2_bin_256    (BN_256 bn, char* bin);
-extern int  hex_2_bn_256    (BN_256 bn, const char* hex);
-
-#define BN_ZERO_256 {0,0,0,0,0,0,0,0}
-#define BN_ONE_256  {0,0,0,0,0,0,0,1}
+extern void bn_256_to_bytes (BN_256 bn, uint8_t* dest);
 
 __CPP_END
 

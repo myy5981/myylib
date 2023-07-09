@@ -7,6 +7,9 @@ test
 util/*
 !util/*.c
 
+**/x86
+**/x86_64
+
 debug/*
 !debug/debug.c
 !debug/Makefile

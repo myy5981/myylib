@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := dynamic
 
-CC = gcc -m32
-LINK = gcc -m32
+CC = gcc -m64
+LINK = gcc -m64
 AR = ar
 CLEVEL = -O2
 CFLAGS = -c -Wall -Werror -I./include $(CLEVEL)

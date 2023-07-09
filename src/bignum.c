@@ -1,4 +1,5 @@
 #include <myy/bignum.h>
+#include <myy/endian.h>
 
 void __bn_256_add(BN_256 r, const BN_256 a, const BN_256 b){
     asm volatile (
@@ -113,81 +114,13 @@ void bn_256_zero(BN_256 bn){
     bn[6] = 0; bn[7] = 0;
 }
 
-int bin_2_bn_256(BN_256 bn, const char* bin){
-    int len=0;
-    char c;
-    while((c=bin[len])!='\0'){
-        if(c!='0'&&c!='1'){
-            return -1;
-        }
-        len++;
-    }
-    uint32_t n=0;int j=0,k=7;
-    for(int i=len-1;i>=0;--i){
-        if(bin[i]=='1'){
-            n=n+(1<<j);
-        }
-        j++;
-        if(j==32){
-            j=0;
-            bn[k--]=n;
-            if(k<0){
-                return 0;
-            }
-            n=0;
-        }
-    }
-    bn[k]=n;
-    return 0;
-}
-
-void bn_2_bin_256(BN_256 bn, char* bin){
-    int k=0;
-    for (int i = 0; i < 8; i++) {
-        uint32_t n = bn[i];
-        for (int j = 31; j >= 0; j--) {
-            bin[k++]=((n>>j)&1)==0?'0':'1';
-        }
-    }
-}
-
-static int hexch_2_int(char c){
-    if(c>='0'&&c<='9'){
-        return c-'0';
-    }
-    if(c>='a'&&c<='f'){
-        return c-'a'+10;
-    }
-    if(c>='A'&&c<='F'){
-        return c-'A'+10;
-    }
-    return -1;
-}
-
-int hex_2_bn_256(BN_256 bn, const char* hex){
-    int len=0;
-    char c;
-    while((c=hex[len])!='\0'){
-        if((c>='0'&&c<='9')||(c>='a'&&c<='f')||(c>='A'&&c<='F')){
-            len++;
-            continue;
-        }
-        return -1;
-    }
-    uint32_t n=0;int j=0,k=7;
-    for(int i=len-1;i>=0;--i){
-        int h=hexch_2_int(hex[i]);
-        n=n+(h<<j);
-        j+=4;
-        if(j==32){
-            j=0;
-            bn[k--]=n;
-            if(k<0){
-                return 0;
-            }
-            n=0;
-        }
-    }
-    bn[k]=n;
-    return 0;
+void bn_256_to_bytes (BN_256 bn, uint8_t* dest){
+    ((uint32_t*)dest)[0]=h2be_32(bn[0]);
+    ((uint32_t*)dest)[1]=h2be_32(bn[1]);
+    ((uint32_t*)dest)[2]=h2be_32(bn[2]);
+    ((uint32_t*)dest)[3]=h2be_32(bn[3]);
+    ((uint32_t*)dest)[4]=h2be_32(bn[4]);
+    ((uint32_t*)dest)[5]=h2be_32(bn[5]);
+    ((uint32_t*)dest)[6]=h2be_32(bn[6]);
+    ((uint32_t*)dest)[7]=h2be_32(bn[7]);
 }
