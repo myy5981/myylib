@@ -15,7 +15,7 @@ OBJ = obj/endian.o\
 		obj/url_base64.o\
 		obj/algorithm.o\
 		obj/bignum.o\
-		obj/bignum_512.o
+		obj/sm2_bn.o
 
 .PHONY: debug
 debug: CLEVEL = -g -fdiagnostics-color=always

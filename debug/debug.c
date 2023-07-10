@@ -1,39 +1,32 @@
 #include <myy/bignum.h>
-#include <stdio.h>
+#include <myy/sm2_bn.h>
+#include <myy/hex.h>
 
-// static BN_256 p  = {0x0FFFFFFEu,0xFFFFFFFFu,0xFFFFFFFFu,0xFFFFFFFFu,0xFFFFFFFFu,0x00000000u,0xFFFFFFFFu,0xFFFFFFFFu};
-static BN_256 a  = {0xFFFFFFFFu,0xFFFFFFFFu,0xFFFFFFFFu,0xFFFFFFFFu,0xFFFFFFFFu,0xFFFFFFFFu,0xFFFFFFFFu,0xFFFFFFFFu};
-static BN_256 b = BN_256_INIT(FFFFFFFF,FFFFFFFF,FFFFFFFF,FFFFFFFF,FFFFFFFF,FFFFFFFF,FFFFFFFF,FFFFFFFF);
+#include <stdio.h>
 int main(void){
 
-    BN_512 r={0};
+BN_256_GFp r=BN_256_ZERO;
+BN_256_GFp a=BN_256_INIT(fffc73ab,d92efb9c,fad6ebfc,6d7eabf6,e7a95792,33000000,00000000,00000000);
+BN_256_GFp b=BN_256_INIT(f8796103,7490aefd,bcfecbab,dfeefa87,54957765,70000000,00000000,00000000);
 
-    bn_256_mul(r,a,b);
+bn_256_GFp_add(r,a,b);
 
-    for (size_t i = 0; i < 16; i++)
-    {
-        printf("%8X",r[i]);
-    }
-    printf("\n");
+uint8_t bn[32]={0};
+char hex[65]={0};
 
+    bn_256_to_bytes(r,bn);
 
-    // const char* _a="101010010111111111101010100010010100101";
-    // const char* _b="101000110100100100010001001001111111111";
-    // //00000000000000000001100011011011011001011000010100110
-    // //11111111111111111110011100100100100110100111101011010
-    // //00000000000001010011001100100011111011101100010100100
-    // BN_256 a=BN_ZERO_256;
-    // BN_256 b=BN_ZERO_256;
-    // BN_256 c=BN_ZERO_256;
-    // bin_2_bn_256(a,_a);
-    // bin_2_bn_256(b,_b);
+    hex_encode(bn,32,hex,HEX_ENCODE_UPPER);
 
-    // bn_sub_256(c,b,a);
+    printf("%s\n",hex);
 
-    // char res[257]={0};
-    // bn_2_bin_256(c,res);
+bn_256_add(r,a,b);
 
-    // printf("\n%s\n",res);
+    bn_256_to_bytes(r,bn);
+
+    hex_encode(bn,32,hex,HEX_ENCODE_UPPER);
+
+    printf("%s\n",hex);
 
     return 0;
 }
