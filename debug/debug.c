@@ -3,30 +3,38 @@
 #include <myy/hex.h>
 
 #include <stdio.h>
+
+#include <openssl/bn.h>
+
+#define BIGNUM_INIT(a,b,c,d,e,f,g,h,bn) BN_hex2bn(&bn,#a#b#c#d#e#f#g#h)
+
 int main(void){
+    BN_CTX* ctx=BN_CTX_new();
+    BIGNUM* a_=BN_new();
+    BIGNUM* b_=BN_new();
+    BIGNUM* m=BN_new();
 
-BN_256_GFp r=BN_256_ZERO;
-BN_256_GFp a=BN_256_INIT(fffc73ab,d92efb9c,fad6ebfc,6d7eabf6,e7a95792,33000000,00000000,00000000);
-BN_256_GFp b=BN_256_INIT(f8796103,7490aefd,bcfecbab,dfeefa87,54957765,70000000,00000000,00000000);
+    BN_hex2bn(&m,"FFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000FFFFFFFFFFFFFFFF");
+    
+    BIGNUM* r3=BN_new();
 
-bn_256_GFp_add(r,a,b);
+    BN_256 a=   BN_256_INIT(FFFFFFFE,FFFFFFFF,00000000,FFFFFFFF,FFFFFFFF,FFFFFFFF,FFFFFFFF,00000004);
+                BIGNUM_INIT(FFFFFFFE,FFFFFFFF,00000000,FFFFFFFF,FFFFFFFF,FFFFFFFF,FFFFFFFF,00000004,a_);
+    
+    BN_256 b=   BN_256_INIT(FFFFFFFE,FFFFFFFF,00000000,FFFFFFFF,FFFFFFFF,FFFFFFFF,FFFFFFFF,0000000E);
+                BIGNUM_INIT(FFFFFFFE,FFFFFFFF,00000000,FFFFFFFF,FFFFFFFF,FFFFFFFF,FFFFFFFF,0000000E,b_);
 
-uint8_t bn[32]={0};
-char hex[65]={0};
+    BN_256 r={0};
+    bn_256_GFp_mul(r,a,b);
+    for (int i = 0; i < 8; i++)
+    {
+        printf("%8X",r[i]);
+    }
+    printf("\n");
+    
 
-    bn_256_to_bytes(r,bn);
-
-    hex_encode(bn,32,hex,HEX_ENCODE_UPPER);
-
-    printf("%s\n",hex);
-
-bn_256_add(r,a,b);
-
-    bn_256_to_bytes(r,bn);
-
-    hex_encode(bn,32,hex,HEX_ENCODE_UPPER);
-
-    printf("%s\n",hex);
+    BN_mod_mul(r3,a_,b_,m,ctx);
+    printf("000000%s\n",BN_bn2hex(r3));
 
     return 0;
 }

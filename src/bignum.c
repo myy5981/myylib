@@ -32,7 +32,7 @@ void __bn_256_add(BN_256 r, const BN_256 a, const BN_256 b){
     );
 }
 
-int  bn_256_add(BN_256 r, const BN_256 a, const BN_256 b){
+int bn_256_add(BN_256 r, const BN_256 a, const BN_256 b){
     int f=0;
     asm volatile (
         "movl 28(%2), %%eax\n\t"
@@ -132,6 +132,53 @@ void bn_256_to_bytes (BN_256 bn, uint8_t* dest){
     ((uint32_t*)dest)[7]=h2be_32(bn[7]);
 }
 
+#define __MUL_ASM_UNIT_1__(a,x,t) \
+        "movl "#a"(%1), %%eax\n\t"\
+        "mull "#x"(%2)\n\t"\
+        "addl %%ebx, %%eax\n\t"\
+        "movl %%eax, "#t"(%3)\n\t"\
+        "adcl $0, %%edx\n\t"\
+        "movl %%edx, %%ebx\n\t"\
+
+#define __MUL_ASM_UNIT_2__(x)         \
+        "movl 28(%1), %%eax\n\t"\
+        "mull "#x"(%2)\n\t"\
+        "movl %%eax, 32(%3)\n\t"\
+        "movl %%edx, %%ebx\n\t"\
+        __MUL_ASM_UNIT_1__(24,x,28)\
+        __MUL_ASM_UNIT_1__(20,x,24)\
+        __MUL_ASM_UNIT_1__(16,x,20)\
+        __MUL_ASM_UNIT_1__(12,x,16)\
+        __MUL_ASM_UNIT_1__(8,x,12)\
+        __MUL_ASM_UNIT_1__(4,x,8)\
+        "movl (%1), %%eax\n\t"\
+        "mull "#x"(%2)\n\t"\
+        "addl %%ebx, %%eax\n\t"\
+        "movl %%eax, 4(%3)\n\t"\
+        "adcl $0, %%edx\n\t"\
+        "movl %%edx, (%3)\n\t"
+
+#define __MUL_ASM_UNIT_3__(a,b,c,d,e,f,g,h,i) \
+        "movl 32(%3), %%eax\n\t"\
+        "addl %%eax, "#a"(%0)\n\t"\
+        "movl 28(%3), %%eax\n\t"\
+        "adcl %%eax, "#b"(%0)\n\t"\
+        "movl 24(%3), %%eax\n\t"\
+        "adcl %%eax, "#c"(%0)\n\t"\
+        "movl 20(%3), %%eax\n\t"\
+        "adcl %%eax, "#d"(%0)\n\t"\
+        "movl 16(%3), %%eax\n\t"\
+        "adcl %%eax, "#e"(%0)\n\t"\
+        "movl 12(%3), %%eax\n\t"\
+        "adcl %%eax, "#f"(%0)\n\t"\
+        "movl 8(%3), %%eax\n\t"\
+        "adcl %%eax, "#g"(%0)\n\t"\
+        "movl 4(%3), %%eax\n\t"\
+        "adcl %%eax, "#h"(%0)\n\t"\
+        "movl (%3), %%eax\n\t"\
+        "adcl %%eax, "#i"(%0)\n\t"
+
+
 void bn_256_mul(BN_512 r, const BN_256 a, const BN_256 b){
     uint32_t t[9]={0};
     r[0]=0;r[1]=0;r[2]=0;r[3]=0;
@@ -192,519 +239,126 @@ void bn_256_mul(BN_512 r, const BN_256 a, const BN_256 b){
         "movl %%eax, 32(%0)\n\t"
         "adcl $0, %%edx\n\t"
         "movl %%edx, 28(%0)\n\t"
-/*======================================*/
-        "movl 28(%1), %%eax\n\t"
-        "mull 24(%2)\n\t"
-        "movl %%eax, 32(%3)\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 24(%1), %%eax\n\t"
-        "mull 24(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 28(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 20(%1), %%eax\n\t"
-        "mull 24(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 24(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 16(%1), %%eax\n\t"
-        "mull 24(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 20(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 12(%1), %%eax\n\t"
-        "mull 24(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 16(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 8(%1), %%eax\n\t"
-        "mull 24(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 12(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 4(%1), %%eax\n\t"
-        "mull 24(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 8(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl (%1), %%eax\n\t"
-        "mull 24(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 4(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, (%3)\n\t"
-
-        "movl 32(%3), %%eax\n\t"
-        "addl %%eax, 56(%0)\n\t"
-        "movl 28(%3), %%eax\n\t"
-        "adcl %%eax, 52(%0)\n\t"
-        "movl 24(%3), %%eax\n\t"
-        "adcl %%eax, 48(%0)\n\t"
-        "movl 20(%3), %%eax\n\t"
-        "adcl %%eax, 44(%0)\n\t"
-        "movl 16(%3), %%eax\n\t"
-        "adcl %%eax, 40(%0)\n\t"
-        "movl 12(%3), %%eax\n\t"
-        "adcl %%eax, 36(%0)\n\t"
-        "movl 8(%3), %%eax\n\t"
-        "adcl %%eax, 32(%0)\n\t"
-        "movl 4(%3), %%eax\n\t"
-        "adcl %%eax, 28(%0)\n\t"
-        "movl (%3), %%eax\n\t"
-        "adcl %%eax, 24(%0)\n\t"
-/*======================================*/
-        "movl 28(%1), %%eax\n\t"
-        "mull 20(%2)\n\t"
-        "movl %%eax, 32(%3)\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 24(%1), %%eax\n\t"
-        "mull 20(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 28(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 20(%1), %%eax\n\t"
-        "mull 20(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 24(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 16(%1), %%eax\n\t"
-        "mull 20(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 20(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 12(%1), %%eax\n\t"
-        "mull 20(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 16(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 8(%1), %%eax\n\t"
-        "mull 20(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 12(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 4(%1), %%eax\n\t"
-        "mull 20(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 8(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl (%1), %%eax\n\t"
-        "mull 20(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 4(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, (%3)\n\t"
-
-        "movl 32(%3), %%eax\n\t"
-        "addl %%eax, 52(%0)\n\t"
-        "movl 28(%3), %%eax\n\t"
-        "adcl %%eax, 48(%0)\n\t"
-        "movl 24(%3), %%eax\n\t"
-        "adcl %%eax, 44(%0)\n\t"
-        "movl 20(%3), %%eax\n\t"
-        "adcl %%eax, 40(%0)\n\t"
-        "movl 16(%3), %%eax\n\t"
-        "adcl %%eax, 36(%0)\n\t"
-        "movl 12(%3), %%eax\n\t"
-        "adcl %%eax, 32(%0)\n\t"
-        "movl 8(%3), %%eax\n\t"
-        "adcl %%eax, 28(%0)\n\t"
-        "movl 4(%3), %%eax\n\t"
-        "adcl %%eax, 24(%0)\n\t"
-        "movl (%3), %%eax\n\t"
-        "adcl %%eax, 20(%0)\n\t"
-/*======================================*/
-        "movl 28(%1), %%eax\n\t"
-        "mull 16(%2)\n\t"
-        "movl %%eax, 32(%3)\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 24(%1), %%eax\n\t"
-        "mull 16(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 28(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 20(%1), %%eax\n\t"
-        "mull 16(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 24(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 16(%1), %%eax\n\t"
-        "mull 16(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 20(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 12(%1), %%eax\n\t"
-        "mull 16(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 16(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 8(%1), %%eax\n\t"
-        "mull 16(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 12(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 4(%1), %%eax\n\t"
-        "mull 16(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 8(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl (%1), %%eax\n\t"
-        "mull 16(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 4(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, (%3)\n\t"
-
-        "movl 32(%3), %%eax\n\t"
-        "addl %%eax, 48(%0)\n\t"
-        "movl 28(%3), %%eax\n\t"
-        "adcl %%eax, 44(%0)\n\t"
-        "movl 24(%3), %%eax\n\t"
-        "adcl %%eax, 40(%0)\n\t"
-        "movl 20(%3), %%eax\n\t"
-        "adcl %%eax, 36(%0)\n\t"
-        "movl 16(%3), %%eax\n\t"
-        "adcl %%eax, 32(%0)\n\t"
-        "movl 12(%3), %%eax\n\t"
-        "adcl %%eax, 28(%0)\n\t"
-        "movl 8(%3), %%eax\n\t"
-        "adcl %%eax, 24(%0)\n\t"
-        "movl 4(%3), %%eax\n\t"
-        "adcl %%eax, 20(%0)\n\t"
-        "movl (%3), %%eax\n\t"
-        "adcl %%eax, 16(%0)\n\t"
-/*======================================*/
-        "movl 28(%1), %%eax\n\t"
-        "mull 12(%2)\n\t"
-        "movl %%eax, 32(%3)\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 24(%1), %%eax\n\t"
-        "mull 12(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 28(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 20(%1), %%eax\n\t"
-        "mull 12(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 24(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 16(%1), %%eax\n\t"
-        "mull 12(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 20(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 12(%1), %%eax\n\t"
-        "mull 12(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 16(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 8(%1), %%eax\n\t"
-        "mull 12(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 12(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 4(%1), %%eax\n\t"
-        "mull 12(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 8(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl (%1), %%eax\n\t"
-        "mull 12(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 4(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, (%3)\n\t"
-
-        "movl 32(%3), %%eax\n\t"
-        "addl %%eax, 44(%0)\n\t"
-        "movl 28(%3), %%eax\n\t"
-        "adcl %%eax, 40(%0)\n\t"
-        "movl 24(%3), %%eax\n\t"
-        "adcl %%eax, 36(%0)\n\t"
-        "movl 20(%3), %%eax\n\t"
-        "adcl %%eax, 32(%0)\n\t"
-        "movl 16(%3), %%eax\n\t"
-        "adcl %%eax, 28(%0)\n\t"
-        "movl 12(%3), %%eax\n\t"
-        "adcl %%eax, 24(%0)\n\t"
-        "movl 8(%3), %%eax\n\t"
-        "adcl %%eax, 20(%0)\n\t"
-        "movl 4(%3), %%eax\n\t"
-        "adcl %%eax, 16(%0)\n\t"
-        "movl (%3), %%eax\n\t"
-        "adcl %%eax, 12(%0)\n\t"
-/*======================================*/
-        "movl 28(%1), %%eax\n\t"
-        "mull 8(%2)\n\t"
-        "movl %%eax, 32(%3)\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 24(%1), %%eax\n\t"
-        "mull 8(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 28(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 20(%1), %%eax\n\t"
-        "mull 8(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 24(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 16(%1), %%eax\n\t"
-        "mull 8(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 20(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 12(%1), %%eax\n\t"
-        "mull 8(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 16(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 8(%1), %%eax\n\t"
-        "mull 8(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 12(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 4(%1), %%eax\n\t"
-        "mull 8(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 8(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl (%1), %%eax\n\t"
-        "mull 8(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 4(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, (%3)\n\t"
-
-        "movl 32(%3), %%eax\n\t"
-        "addl %%eax, 40(%0)\n\t"
-        "movl 28(%3), %%eax\n\t"
-        "adcl %%eax, 36(%0)\n\t"
-        "movl 24(%3), %%eax\n\t"
-        "adcl %%eax, 32(%0)\n\t"
-        "movl 20(%3), %%eax\n\t"
-        "adcl %%eax, 28(%0)\n\t"
-        "movl 16(%3), %%eax\n\t"
-        "adcl %%eax, 24(%0)\n\t"
-        "movl 12(%3), %%eax\n\t"
-        "adcl %%eax, 20(%0)\n\t"
-        "movl 8(%3), %%eax\n\t"
-        "adcl %%eax, 16(%0)\n\t"
-        "movl 4(%3), %%eax\n\t"
-        "adcl %%eax, 12(%0)\n\t"
-        "movl (%3), %%eax\n\t"
-        "adcl %%eax, 8(%0)\n\t"
-/*======================================*/
-        "movl 28(%1), %%eax\n\t"
-        "mull 4(%2)\n\t"
-        "movl %%eax, 32(%3)\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 24(%1), %%eax\n\t"
-        "mull 4(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 28(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 20(%1), %%eax\n\t"
-        "mull 4(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 24(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 16(%1), %%eax\n\t"
-        "mull 4(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 20(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 12(%1), %%eax\n\t"
-        "mull 4(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 16(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 8(%1), %%eax\n\t"
-        "mull 4(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 12(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 4(%1), %%eax\n\t"
-        "mull 4(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 8(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl (%1), %%eax\n\t"
-        "mull 4(%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 4(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, (%3)\n\t"
-
-        "movl 32(%3), %%eax\n\t"
-        "addl %%eax, 36(%0)\n\t"
-        "movl 28(%3), %%eax\n\t"
-        "adcl %%eax, 32(%0)\n\t"
-        "movl 24(%3), %%eax\n\t"
-        "adcl %%eax, 28(%0)\n\t"
-        "movl 20(%3), %%eax\n\t"
-        "adcl %%eax, 24(%0)\n\t"
-        "movl 16(%3), %%eax\n\t"
-        "adcl %%eax, 20(%0)\n\t"
-        "movl 12(%3), %%eax\n\t"
-        "adcl %%eax, 16(%0)\n\t"
-        "movl 8(%3), %%eax\n\t"
-        "adcl %%eax, 12(%0)\n\t"
-        "movl 4(%3), %%eax\n\t"
-        "adcl %%eax, 8(%0)\n\t"
-        "movl (%3), %%eax\n\t"
-        "adcl %%eax, 4(%0)\n\t"
-/*======================================*/
-        "movl 28(%1), %%eax\n\t"
-        "mull (%2)\n\t"
-        "movl %%eax, 32(%3)\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 24(%1), %%eax\n\t"
-        "mull (%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 28(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 20(%1), %%eax\n\t"
-        "mull (%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 24(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 16(%1), %%eax\n\t"
-        "mull (%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 20(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 12(%1), %%eax\n\t"
-        "mull (%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 16(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 8(%1), %%eax\n\t"
-        "mull (%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 12(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl 4(%1), %%eax\n\t"
-        "mull (%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 8(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, %%ebx\n\t"
-
-        "movl (%1), %%eax\n\t"
-        "mull (%2)\n\t"
-        "addl %%ebx, %%eax\n\t"
-        "movl %%eax, 4(%3)\n\t"
-        "adcl $0, %%edx\n\t"
-        "movl %%edx, (%3)\n\t"
-
-        "movl 32(%3), %%eax\n\t"
-        "addl %%eax, 32(%0)\n\t"
-        "movl 28(%3), %%eax\n\t"
-        "adcl %%eax, 28(%0)\n\t"
-        "movl 24(%3), %%eax\n\t"
-        "adcl %%eax, 24(%0)\n\t"
-        "movl 20(%3), %%eax\n\t"
-        "adcl %%eax, 20(%0)\n\t"
-        "movl 16(%3), %%eax\n\t"
-        "adcl %%eax, 16(%0)\n\t"
-        "movl 12(%3), %%eax\n\t"
-        "adcl %%eax, 12(%0)\n\t"
-        "movl 8(%3), %%eax\n\t"
-        "adcl %%eax, 8(%0)\n\t"
-        "movl 4(%3), %%eax\n\t"
-        "adcl %%eax, 4(%0)\n\t"
-        "movl (%3), %%eax\n\t"
-        "adcl %%eax, (%0)\n\t"
-/*======================================*/
+        __MUL_ASM_UNIT_2__(24)
+        __MUL_ASM_UNIT_3__(56,52,48,44,40,36,32,28,24)
+        __MUL_ASM_UNIT_2__(20)
+        __MUL_ASM_UNIT_3__(52,48,44,40,36,32,28,24,20)
+        __MUL_ASM_UNIT_2__(16)
+        __MUL_ASM_UNIT_3__(48,44,40,36,32,28,24,20,16)
+        __MUL_ASM_UNIT_2__(12)
+        __MUL_ASM_UNIT_3__(44,40,36,32,28,24,20,16,12)
+        __MUL_ASM_UNIT_2__(8)
+        __MUL_ASM_UNIT_3__(40,36,32,28,24,20,16,12,8)
+        __MUL_ASM_UNIT_2__(4)
+        __MUL_ASM_UNIT_3__(36,32,28,24,20,16,12,8,4)
+        __MUL_ASM_UNIT_2__()
+        __MUL_ASM_UNIT_3__(32,28,24,20,16,12,8,4,)
         ::"r"(r),"r"(a),"r"(b),"r"(t)
         :"eax","ebx","edx"
     );
+}
+
+void bn_256_dmul(BN_256 r, const BN_256 a, const BN_256 b){
+    BN_512 _r;
+    bn_256_mul(_r,a,b);
+    bn_512_hhalf(r,_r);
+}
+
+/*
+
+--------|--------
+       J|ABCDEFGH
+      JA|BCDEFGH
+     JAB|CDEFGH
+    JABC|DEFGH
+   JABCD|EFGH
+  JABCDE|FGH
+ JABCDEF|GH
+JABCDEFG|H
+
+*/
+// void bn_256_barrett_mod_mul(BN_256 r, const BN_256 a, const BN_256 b, const BN_256 P, const BN_256 m){
+//     BN_256 q1,q2;
+//     #define q3 q2
+//     BN_512 X,q3m,R;
+// 
+//     bn_256_mul(X,a,b);
+//     bn_512_hhalf(q1,X);
+//     bn_256_dmul(q2,q1,m);
+//     bn_256_add(q3,q2,q1);
+// 
+//     bn_256_mul(q3m,q2,P);
+//     bn_512_sub(R,X,q3m);
+//     while(bn_512_cmp(R,P)>0){
+//         bn_512_sub(R,R,P);
+//     }
+//     bn_512_lhalf(r,R);
+//     
+//     #undef q3
+// }
+#undef __MUL_ASM_UNIT_1__
+#undef __MUL_ASM_UNIT_2__
+#undef __MUL_ASM_UNIT_3__
+
+void bn_512_sub(BN_512 r, const BN_512 a, const BN_512 b){
+    asm volatile (
+        "movl 60(%1), %%eax\n\t"
+        "subl 60(%2), %%eax\n\t"
+        "movl %%eax, 60(%0)\n\t"
+        "movl 56(%1), %%eax\n\t"
+        "sbbl 56(%2), %%eax\n\t"
+        "movl %%eax, 56(%0)\n\t"
+        "movl 52(%1), %%eax\n\t"
+        "sbbl 52(%2), %%eax\n\t"
+        "movl %%eax, 52(%0)\n\t"
+        "movl 48(%1), %%eax\n\t"
+        "sbbl 48(%2), %%eax\n\t"
+        "movl %%eax, 48(%0)\n\t"
+        "movl 44(%1), %%eax\n\t"
+        "sbbl 44(%2), %%eax\n\t"
+        "movl %%eax, 44(%0)\n\t"
+        "movl 40(%1), %%eax\n\t"
+        "sbbl 40(%2), %%eax\n\t"
+        "movl %%eax, 40(%0)\n\t"
+        "movl 36(%1), %%eax\n\t"
+        "sbbl 36(%2), %%eax\n\t"
+        "movl %%eax, 36(%0)\n\t"
+        "movl 32(%1), %%eax\n\t"
+        "sbbl 32(%2), %%eax\n\t"
+        "movl %%eax, 32(%0)\n\t"
+        "movl 28(%1), %%eax\n\t"
+        "sbbl 28(%2), %%eax\n\t"
+        "movl %%eax, 28(%0)\n\t"
+        "movl 24(%1), %%eax\n\t"
+        "sbbl 24(%2), %%eax\n\t"
+        "movl %%eax, 24(%0)\n\t"
+        "movl 20(%1), %%eax\n\t"
+        "sbbl 20(%2), %%eax\n\t"
+        "movl %%eax, 20(%0)\n\t"
+        "movl 16(%1), %%eax\n\t"
+        "sbbl 16(%2), %%eax\n\t"
+        "movl %%eax, 16(%0)\n\t"
+        "movl 12(%1), %%eax\n\t"
+        "sbbl 12(%2), %%eax\n\t"
+        "movl %%eax, 12(%0)\n\t"
+        "movl 8(%1), %%eax\n\t"
+        "sbbl 8(%2), %%eax\n\t"
+        "movl %%eax, 8(%0)\n\t"
+        "movl 4(%1), %%eax\n\t"
+        "sbbl 4(%2), %%eax\n\t"
+        "movl %%eax, 4(%0)\n\t"
+        "movl (%1), %%eax\n\t"
+        "sbbl (%2), %%eax\n\t"
+        "movl %%eax, (%0)\n\t"
+        ::"r"(r),"r"(a),"r"(b)
+        :"eax"
+    );
+}
+
+int bn_512_cmp(const BN_512 a, const BN_512 b){
+    for (int i=0;i<16;i++){
+        if(a[i]>b[i]) return 1;
+        if(a[i]<b[i]) return -1;
+    }
+    return 0;
 }
