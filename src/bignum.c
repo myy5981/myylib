@@ -261,7 +261,7 @@ void bn_256_mul(BN_512 r, const BN_256 a, const BN_256 b){
 void bn_256_dmul(BN_256 r, const BN_256 a, const BN_256 b){
     BN_512 _r;
     bn_256_mul(_r,a,b);
-    bn_512_hhalf(r,_r);
+    bn_512_high(r,_r);
 }
 
 /*
@@ -275,32 +275,14 @@ void bn_256_dmul(BN_256 r, const BN_256 a, const BN_256 b){
   JABCDE|FGH
  JABCDEF|GH
 JABCDEFG|H
-
 */
-// void bn_256_barrett_mod_mul(BN_256 r, const BN_256 a, const BN_256 b, const BN_256 P, const BN_256 m){
-//     BN_256 q1,q2;
-//     #define q3 q2
-//     BN_512 X,q3m,R;
-// 
-//     bn_256_mul(X,a,b);
-//     bn_512_hhalf(q1,X);
-//     bn_256_dmul(q2,q1,m);
-//     bn_256_add(q3,q2,q1);
-// 
-//     bn_256_mul(q3m,q2,P);
-//     bn_512_sub(R,X,q3m);
-//     while(bn_512_cmp(R,P)>0){
-//         bn_512_sub(R,R,P);
-//     }
-//     bn_512_lhalf(r,R);
-//     
-//     #undef q3
-// }
+
+
 #undef __MUL_ASM_UNIT_1__
 #undef __MUL_ASM_UNIT_2__
 #undef __MUL_ASM_UNIT_3__
 
-void bn_512_sub(BN_512 r, const BN_512 a, const BN_512 b){
+void bn_288_sub(BN_512 r, const BN_512 a, const BN_512 b){
     asm volatile (
         "movl 60(%1), %%eax\n\t"
         "subl 60(%2), %%eax\n\t"
@@ -329,36 +311,26 @@ void bn_512_sub(BN_512 r, const BN_512 a, const BN_512 b){
         "movl 28(%1), %%eax\n\t"
         "sbbl 28(%2), %%eax\n\t"
         "movl %%eax, 28(%0)\n\t"
-        "movl 24(%1), %%eax\n\t"
-        "sbbl 24(%2), %%eax\n\t"
-        "movl %%eax, 24(%0)\n\t"
-        "movl 20(%1), %%eax\n\t"
-        "sbbl 20(%2), %%eax\n\t"
-        "movl %%eax, 20(%0)\n\t"
-        "movl 16(%1), %%eax\n\t"
-        "sbbl 16(%2), %%eax\n\t"
-        "movl %%eax, 16(%0)\n\t"
-        "movl 12(%1), %%eax\n\t"
-        "sbbl 12(%2), %%eax\n\t"
-        "movl %%eax, 12(%0)\n\t"
-        "movl 8(%1), %%eax\n\t"
-        "sbbl 8(%2), %%eax\n\t"
-        "movl %%eax, 8(%0)\n\t"
-        "movl 4(%1), %%eax\n\t"
-        "sbbl 4(%2), %%eax\n\t"
-        "movl %%eax, 4(%0)\n\t"
-        "movl (%1), %%eax\n\t"
-        "sbbl (%2), %%eax\n\t"
-        "movl %%eax, (%0)\n\t"
         ::"r"(r),"r"(a),"r"(b)
         :"eax"
     );
 }
 
-int bn_512_cmp(const BN_512 a, const BN_512 b){
-    for (int i=0;i<16;i++){
+int bn_288_cmp(const BN_512 a, const BN_512 b){
+    for (int i=7;i<16;i++){
         if(a[i]>b[i]) return 1;
         if(a[i]<b[i]) return -1;
     }
     return 0;
+}
+
+void bn_256_from_bytes (BN_256 bn, uint8_t* src){
+    bn[0]=be2h_32(((uint32_t*)src)[0]);
+    bn[1]=be2h_32(((uint32_t*)src)[1]);
+    bn[2]=be2h_32(((uint32_t*)src)[2]);
+    bn[3]=be2h_32(((uint32_t*)src)[3]);
+    bn[4]=be2h_32(((uint32_t*)src)[4]);
+    bn[5]=be2h_32(((uint32_t*)src)[5]);
+    bn[6]=be2h_32(((uint32_t*)src)[6]);
+    bn[7]=be2h_32(((uint32_t*)src)[7]);
 }

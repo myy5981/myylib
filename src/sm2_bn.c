@@ -50,18 +50,18 @@ void bn_256_GFp_half(BN_256_GFp r, const BN_256_GFp a){
 
 // Barrett Reduction
 void bn_256_GFp_mul(BN_256_GFp r, const BN_256_GFp a, const BN_256_GFp b){
-    BN_256 q1,q2;
-    #define q3 q2
-    BN_512 X,q3p,R;
+    BN_256_ptr q1,q2;
+    BN_256 q3;
+    BN_512 X,q2m,q3p,R;
     bn_256_mul(X,a,b);
-    bn_512_hhalf(q1,X);
-    bn_256_dmul(q2,q1,TWO_POWED_512_DIV_SM2_P);
-    bn_256_add(q3,q2,q1);
+    q1 = bn_512_hhalf(X);
+    bn_256_mul(q2m,q1,TWO_POWED_512_DIV_SM2_P);
+    q2 = bn_512_hhalf(q2m);
+    __bn_256_add(q3,q2,q1);
     bn_256_mul(q3p,q3,SM2_P);
-    bn_512_sub(R,X,q3p);
-    while(bn_512_cmp(R,SM2_P_512)>0){
-        bn_512_sub(R,R,SM2_P_512);
+    bn_288_sub(R,X,q3p);
+    while(bn_288_cmp(R,SM2_P_512)>0){
+        bn_288_sub(R,R,SM2_P_512);
     }
-    bn_512_lhalf(r,R);
-    #undef q3
+    bn_512_low(r,R);
 }

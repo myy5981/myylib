@@ -1,10 +1,10 @@
 CC = gcc -m64
-CFLAGS = -Wall -Werror -I../include -g -std=c99 -c
+CFLAGS = -Wall -Werror -I../include -I../../GmSSL/include -g -std=c99 -c
 
 default: build debug
 
 debug: debug.o
-	gcc -L../lib $^ -o $@ -lmyy -lcrypto
+	gcc -L../lib $^ -o $@ -lmyy -lcrypto -lgmssl
 
 debug.o: debug.c
 	$(CC) $(CFLAGS) $^ -o $@
@@ -17,4 +17,3 @@ clean:
 .PHONY: build
 build: 
 	make debug -C ../
-	cp ../lib/libmyy.so ./
