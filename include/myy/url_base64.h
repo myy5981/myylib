@@ -5,8 +5,8 @@
 
 __CPP_BEGIN
 
-extern size_t url_base64_encode(const void* src, size_t len, char* dest);
-extern size_t url_base64_decode(const char* src, size_t len, void* dest);
+extern	size_t	url_base64_encode(const void* src, size_t len, char* dest);
+extern	size_t	url_base64_decode(const char* src, size_t len, void* dest);
 
 __CPP_END
 
