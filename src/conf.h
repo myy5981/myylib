@@ -1,0 +1,1 @@
+#define __MYY_PRIVATE_API__

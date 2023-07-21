@@ -1,68 +1,99 @@
+#include "conf.h"
 #include <myy/bignum.h>
 #include <myy/endian.h>
 
+#define __ADD_ASM_UNIT_1__(x) \
+		"movl "#x"(%1), %%eax\n\t"\
+		"adcl "#x"(%2), %%eax\n\t"\
+		"movl %%eax, "#x"(%0)\n\t"
 void bn_256_add(BN_256 r, const BN_256 a, const BN_256 b){
 	asm volatile (
 		"movl 28(%1), %%eax\n\t"
 		"addl 28(%2), %%eax\n\t"
 		"movl %%eax, 28(%0)\n\t"
-		"movl 24(%1), %%eax\n\t"
-		"adcl 24(%2), %%eax\n\t"
-		"movl %%eax, 24(%0)\n\t"
-		"movl 20(%1), %%eax\n\t"
-		"adcl 20(%2), %%eax\n\t"
-		"movl %%eax, 20(%0)\n\t"
-		"movl 16(%1), %%eax\n\t"
-		"adcl 16(%2), %%eax\n\t"
-		"movl %%eax, 16(%0)\n\t"
-		"movl 12(%1), %%eax\n\t"
-		"adcl 12(%2), %%eax\n\t"
-		"movl %%eax, 12(%0)\n\t"
-		"movl 8(%1), %%eax\n\t"
-		"adcl 8(%2), %%eax\n\t"
-		"movl %%eax, 8(%0)\n\t"
-		"movl 4(%1), %%eax\n\t"
-		"adcl 4(%2), %%eax\n\t"
-		"movl %%eax, 4(%0)\n\t"
-		"movl (%1), %%eax\n\t"
-		"adcl (%2), %%eax\n\t"
-		"movl %%eax, (%0)\n\t"
+		__ADD_ASM_UNIT_1__(24)
+		__ADD_ASM_UNIT_1__(20)
+		__ADD_ASM_UNIT_1__(16)
+		__ADD_ASM_UNIT_1__(12)
+		__ADD_ASM_UNIT_1__(8)
+		__ADD_ASM_UNIT_1__(4)
+		__ADD_ASM_UNIT_1__()
 		::"r"(r),"r"(a),"r"(b)
 		:"eax"
 	);
 }
+#undef __ADD_ASM_UNIT_1__
 
+#define __ADC_ASM_UNIT_1__(x) \
+		"movl "#x"(%2), %%eax\n\t"\
+		"adcl "#x"(%3), %%eax\n\t"\
+		"movl %%eax, "#x"(%1)\n\t"
 int bn_256_adc(BN_256 r, const BN_256 a, const BN_256 b){
 	int f=0;
 	asm volatile (
 		"movl 28(%2), %%eax\n\t"
 		"addl 28(%3), %%eax\n\t"
 		"movl %%eax, 28(%1)\n\t"
-		"movl 24(%2), %%eax\n\t"
-		"adcl 24(%3), %%eax\n\t"
-		"movl %%eax, 24(%1)\n\t"
-		"movl 20(%2), %%eax\n\t"
-		"adcl 20(%3), %%eax\n\t"
-		"movl %%eax, 20(%1)\n\t"
-		"movl 16(%2), %%eax\n\t"
-		"adcl 16(%3), %%eax\n\t"
-		"movl %%eax, 16(%1)\n\t"
-		"movl 12(%2), %%eax\n\t"
-		"adcl 12(%3), %%eax\n\t"
-		"movl %%eax, 12(%1)\n\t"
-		"movl 8(%2), %%eax\n\t"
-		"adcl 8(%3), %%eax\n\t"
-		"movl %%eax, 8(%1)\n\t"
-		"movl 4(%2), %%eax\n\t"
-		"adcl 4(%3), %%eax\n\t"
-		"movl %%eax, 4(%1)\n\t"
-		"movl (%2), %%eax\n\t"
-		"adcl (%3), %%eax\n\t"
-		"movl %%eax, (%1)\n\t"
+		__ADC_ASM_UNIT_1__(24)
+		__ADC_ASM_UNIT_1__(20)
+		__ADC_ASM_UNIT_1__(16)
+		__ADC_ASM_UNIT_1__(12)
+		__ADC_ASM_UNIT_1__(8)
+		__ADC_ASM_UNIT_1__(4)
+		__ADC_ASM_UNIT_1__()
 		"movl $0, %0\n\t"
 		"adcl $0, %0\n\t"
 		:"=r"(f)
 		:"r"(r),"r"(a),"r"(b)
+		:"eax"
+	);
+	return f;
+}
+#undef __ADC_ASM_UNIT_1__
+
+#define __INC_ASM_UNIT_1__(x) \
+		"movl "#x"(%1), %%eax\n\t"\
+		"adcl %%eax, "#x"(%0)\n\t"
+void bn_256_inc(BN_256 a, const BN_256 b){
+	asm volatile(
+		"movl 28(%1), %%eax\n\t"
+		"addl %%eax, 28(%0)\n\t"
+		__INC_ASM_UNIT_1__(24)
+		__INC_ASM_UNIT_1__(20)
+		__INC_ASM_UNIT_1__(16)
+		__INC_ASM_UNIT_1__(12)
+		__INC_ASM_UNIT_1__(8)
+		__INC_ASM_UNIT_1__(4)
+		__INC_ASM_UNIT_1__()
+		::"r"(a),"r"(b)
+		:"eax"
+	);
+}
+#undef __INC_ASM_UNIT_1__
+
+int bn_256_inc1(BN_256 a){
+	int f=0;
+	asm(
+		"addl $1, 28(%1)\n\t"
+		"JNC __bn_256_inc1_exit\n\t"
+		"addl $1, 24(%1)\n\t"
+		"JNC __bn_256_inc1_exit\n\t"
+		"addl $1, 20(%1)\n\t"
+		"JNC __bn_256_inc1_exit\n\t"
+		"addl $1, 16(%1)\n\t"
+		"JNC __bn_256_inc1_exit\n\t"
+		"addl $1, 12(%1)\n\t"
+		"JNC __bn_256_inc1_exit\n\t"
+		"addl $1, 8(%1)\n\t"
+		"JNC __bn_256_inc1_exit\n\t"
+		"addl $1, 4(%1)\n\t"
+		"JNC __bn_256_inc1_exit\n\t"
+		"addl $1, 0(%1)\n\t"
+		"__bn_256_inc1_exit:\n\t"
+		"movl $0, %0\n\t"
+		"adcl $0, %0\n\t"
+		:"=r"(f)
+		:"r"(a)
 		:"eax"
 	);
 	return f;
@@ -121,7 +152,7 @@ void bn_256_set_word(BN_256 bn, uint32_t w){
 	bn[6] = 0; bn[7] = w;
 }
 
-void bn_256_to_bytes (BN_256 bn, uint8_t* dest){
+void bn_256_to_bin(BN_256 bn, uint8_t* dest){
 	((uint32_t*)dest)[0]=h2be_32(bn[0]);
 	((uint32_t*)dest)[1]=h2be_32(bn[1]);
 	((uint32_t*)dest)[2]=h2be_32(bn[2]);
@@ -130,6 +161,17 @@ void bn_256_to_bytes (BN_256 bn, uint8_t* dest){
 	((uint32_t*)dest)[5]=h2be_32(bn[5]);
 	((uint32_t*)dest)[6]=h2be_32(bn[6]);
 	((uint32_t*)dest)[7]=h2be_32(bn[7]);
+}
+
+void bn_256_from_bin(BN_256 bn, uint8_t* src){
+	bn[0]=be2h_32(((uint32_t*)src)[0]);
+	bn[1]=be2h_32(((uint32_t*)src)[1]);
+	bn[2]=be2h_32(((uint32_t*)src)[2]);
+	bn[3]=be2h_32(((uint32_t*)src)[3]);
+	bn[4]=be2h_32(((uint32_t*)src)[4]);
+	bn[5]=be2h_32(((uint32_t*)src)[5]);
+	bn[6]=be2h_32(((uint32_t*)src)[6]);
+	bn[7]=be2h_32(((uint32_t*)src)[7]);
 }
 
 #define __MUL_ASM_UNIT_1__(a,x,t) \
@@ -462,13 +504,11 @@ void bn_256_imul(BN_256 r, const BN_256 a, const BN_256 b){
  JABCDEF|GH
 JABCDEFG|H
 */
-
-
 #undef __MUL_ASM_UNIT_1__
 #undef __MUL_ASM_UNIT_2__
 #undef __MUL_ASM_UNIT_3__
 
-void bn_288_sub(BN_512 r, const BN_512 a, const BN_512 b){
+void __bn_288_sub(BN_512 r, const BN_512 a, const BN_512 b){
 	asm volatile (
 		"movl 60(%1), %%eax\n\t"
 		"subl 60(%2), %%eax\n\t"
@@ -502,21 +542,58 @@ void bn_288_sub(BN_512 r, const BN_512 a, const BN_512 b){
 	);
 }
 
-int bn_288_cmp(const BN_512 a, const BN_512 b){
-	for (int i=7;i<16;i++){
-		if(a[i]>b[i]) return 1;
-		if(a[i]<b[i]) return -1;
-	}
-	return 0;
+void __bn_288_sbb_256(BN_512 r, const BN_256 b){
+	asm volatile(
+		"movl 28(%1), %%eax\n\t"
+		"subl %%eax, 60(%0)\n\t"
+		"movl 24(%1), %%eax\n\t"
+		"sbbl %%eax, 56(%0)\n\t"
+		"movl 20(%1), %%eax\n\t"
+		"sbbl %%eax, 52(%0)\n\t"
+		"movl 16(%1), %%eax\n\t"
+		"sbbl %%eax, 48(%0)\n\t"
+		"movl 12(%1), %%eax\n\t"
+		"sbbl %%eax, 44(%0)\n\t"
+		"movl 8(%1), %%eax\n\t"
+		"sbbl %%eax, 40(%0)\n\t"
+		"movl 4(%1), %%eax\n\t"
+		"sbbl %%eax, 36(%0)\n\t"
+		"movl (%1), %%eax\n\t"
+		"sbbl %%eax, 32(%0)\n\t"
+		"sbbl $0, 28(%0)\n\t"
+		::"r"(r),"r"(b)
+		:"eax"
+	);
 }
 
-void bn_256_from_bytes (BN_256 bn, uint8_t* src){
-	bn[0]=be2h_32(((uint32_t*)src)[0]);
-	bn[1]=be2h_32(((uint32_t*)src)[1]);
-	bn[2]=be2h_32(((uint32_t*)src)[2]);
-	bn[3]=be2h_32(((uint32_t*)src)[3]);
-	bn[4]=be2h_32(((uint32_t*)src)[4]);
-	bn[5]=be2h_32(((uint32_t*)src)[5]);
-	bn[6]=be2h_32(((uint32_t*)src)[6]);
-	bn[7]=be2h_32(((uint32_t*)src)[7]);
+int __bn_288_cmp_256(const BN_512 a, const BN_256 b){
+	if(a[7]>0){
+		return 1;
+	}
+	return bn_256_cmp(bn_512_l256(a),b);
 }
+
+#define __INC_ASM_UNIT_2__(x) \
+		"movl "#x"(%2), %%eax\n\t"\
+		"adcl %%eax, "#x"(%1)\n\t"
+int __bn_512_h256_inc(BN_512 a, const BN_512 b){
+	int f=0;
+	asm volatile(
+		"stc\n\t"
+		__INC_ASM_UNIT_2__(28)
+		__INC_ASM_UNIT_2__(24)
+		__INC_ASM_UNIT_2__(20)
+		__INC_ASM_UNIT_2__(16)
+		__INC_ASM_UNIT_2__(12)
+		__INC_ASM_UNIT_2__(8)
+		__INC_ASM_UNIT_2__(4)
+		__INC_ASM_UNIT_2__()
+		"movl $0, %0\n\t"
+		"adcl $0, %0\n\t"
+		:"=r"(f)
+		:"r"(a),"r"(b)
+		:"eax"
+	);
+	return f;
+}
+#undef __INC_ASM_UNIT_2__

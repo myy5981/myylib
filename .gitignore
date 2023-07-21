@@ -6,6 +6,7 @@ test
 
 util/*
 !util/*.c
+!util/*.go
 
 **/x86
 **/x86_64
