@@ -8,20 +8,22 @@
 // static const BN_256 SM2_A	=	BN_256_INIT(FFFFFFFE,FFFFFFFF,FFFFFFFF,FFFFFFFF,FFFFFFFF,00000000,FFFFFFFF,FFFFFFFC);
 // static const BN_256 SM2_B	=	BN_256_INIT(28E9FA9E,9D9F5E34,4D5A9E4B,CF6509A7,F39789F5,15AB8F92,DDBCBD41,4D940E93);
 
-// static const JACOBIAN_POINT SM2_G={
+// static const SM2_JPOINT SM2_G={
 // 	.x=BN_256_INIT(32C4AE2C,1F198119,5F990446,6A39C994,8FE30BBF,F2660BE1,715A4589,334C74C7),
 // 	.y=BN_256_INIT(BC3736A2,F4F6779C,59BDCEE3,6B692153,D0A9877C,C62A4740,02DF32E5,2139F0A0),
 // 	.z=BN_256_ONE
 // };
 
-void sm2_jacobian_to_point(SM2_POINT* r, const JACOBIAN_POINT* a){
+void sm2_jpoint_to_point(SM2_POINT* r, const SM2_JPOINT* a){
 	if(bn_256_is_zero(a->z)){
 		bn_256_set_zero(r->x);
 		bn_256_set_zero(r->y);
+		return;
 	}
 	if(bn_256_is_one(a->z)){
 		bn_256_cpy(r->x,a->x);
 		bn_256_cpy(r->y,a->y);
+		return;
 	}
 	BN_256_GFp z_inv;
 	bn_256_GFp_inv(z_inv,a->z);
@@ -31,7 +33,13 @@ void sm2_jacobian_to_point(SM2_POINT* r, const JACOBIAN_POINT* a){
 	bn_256_GFp_mul(r->x,a->x,z_inv);
 }
 
-void sm2_point_dbl(JACOBIAN_POINT* r, const JACOBIAN_POINT* a){
+void sm2_point_to_jpoint(SM2_JPOINT* r, const SM2_POINT* a){
+	bn_256_cpy(r->x,a->x);
+	bn_256_cpy(r->y,a->y);
+	bn_256_set_word(r->z,1);
+}
+
+void sm2_jpoint_dbl(SM2_JPOINT* r, const SM2_JPOINT* a){
 	BN_256_GFp_ptr x1=(BN_256_GFp_ptr)(a->x);
 	BN_256_GFp_ptr y1=(BN_256_GFp_ptr)(a->y);
 	BN_256_GFp_ptr z1=(BN_256_GFp_ptr)(a->z);
@@ -39,13 +47,13 @@ void sm2_point_dbl(JACOBIAN_POINT* r, const JACOBIAN_POINT* a){
 	BN_256_GFp la_2=BN_256_ZERO;
 	BN_256_GFp la_3=BN_256_ZERO;
 	BN_256_GFp tv=BN_256_ZERO;
-	
+	//#define tv y3
 
 	BN_256_GFp_ptr x3=r->x;
 	BN_256_GFp_ptr y3=r->y;
 	BN_256_GFp_ptr z3=r->z;
-	if(sm2_point_is_zero(a)){
-		sm2_point_cpy(r,a);
+	if(sm2_jpoint_is_zero(a)){
+		sm2_jpoint_cpy(r,a);
 		return;
 	}
 
@@ -62,11 +70,11 @@ void sm2_point_dbl(JACOBIAN_POINT* r, const JACOBIAN_POINT* a){
 
 	//lambda_2 and lambda_3
 	bn_256_GFp_dbl(la_2,y1);
-	bn_256_GFp_mul(z3,la_2,z1);//插入算一下z3
+	bn_256_GFp_mul(z3,la_2,z1);//顺便算一下z3
 	bn_256_GFp_sqr(tv,la_2);
-	bn_256_GFp_mul(la_3,tv,la_2);
-	bn_256_GFp_mul(la_3,la_3,y1);
-	bn_256_GFp_mul(la_2,tv,x1);
+	bn_256_GFp_mul(la_3,tv,la_2);//与gmssl差在这里，可以通过平方然后取半得到lambda_3
+	bn_256_GFp_mul(la_3,la_3,y1);//而这里用的是4y1^2 * 2y1 * y1两次乘法
+	bn_256_GFp_mul(la_2,tv,x1);//不想为这个单独写个取半的api，暂且这样吧，差别不大
 
 	//x3
 	bn_256_GFp_sqr(x3,la_1);
@@ -77,7 +85,77 @@ void sm2_point_dbl(JACOBIAN_POINT* r, const JACOBIAN_POINT* a){
 	bn_256_GFp_sub(y3,la_2,x3);
 	bn_256_GFp_mul(y3,y3,la_1);
 	bn_256_GFp_sub(y3,y3,la_3);
+	//#undef tv
 	//九次乘法，九次加减
-	//而gmssl八次乘法九次加减，一次取半
-	//这次是我败了
+	//而gmssl八次乘法九次加减，一次取半（取半为一次位移和至多一次加法）
+	//这次是我败了2333
+}
+
+// 对不起，这个直接🇰🇷了，来源于gmssl:src/sm2_alg.c/sm2_jacobian_point_add
+void sm2_jpoint_add_point(SM2_JPOINT* r, const SM2_JPOINT* a, const SM2_POINT* b){
+
+	if(sm2_jpoint_is_zero(a)){
+		sm2_point_to_jpoint(r,b);
+		return;
+	}
+
+	BN_256_GFp_ptr x1=(BN_256_GFp_ptr)(a->x);
+	BN_256_GFp_ptr y1=(BN_256_GFp_ptr)(a->y);
+	BN_256_GFp_ptr z1=(BN_256_GFp_ptr)(a->z);
+	BN_256_GFp_ptr x2=(BN_256_GFp_ptr)(b->x);
+	BN_256_GFp_ptr y2=(BN_256_GFp_ptr)(b->y);
+	BN_256_GFp_ptr x3=(BN_256_GFp_ptr)(r->x);
+	BN_256_GFp_ptr y3=(BN_256_GFp_ptr)(r->y);
+	BN_256_GFp_ptr z3=(BN_256_GFp_ptr)(r->z);
+
+	BN_256_GFp t1,t2,t3,t4;
+
+	bn_256_GFp_sqr(t1,z1);
+	bn_256_GFp_mul(t2,t1,z1);
+	bn_256_GFp_mul(t1,t1,x2);
+	bn_256_GFp_mul(t2,t2,y2);
+
+	bn_256_GFp_sub(t1,t1,x1);
+	bn_256_GFp_sub(t2,t2,y1);
+	if(bn_256_is_zero(t1)){
+		if(bn_256_is_zero(t2)){
+			sm2_point_to_jpoint(r,b);
+			sm2_jpoint_dbl(r,r);
+			return;
+		}else{
+			bn_256_set_word(r->x,1);
+			bn_256_set_word(r->y,1);
+			bn_256_set_zero(r->z);
+			return;
+		}
+	}
+	bn_256_GFp_mul(z3,z1,t1);
+	bn_256_GFp_sqr(t3,t1);
+	bn_256_GFp_mul(t4,t3,t1);
+    bn_256_GFp_mul(t3, t3, x1);
+    bn_256_GFp_dbl(t1, t3);
+    bn_256_GFp_sqr(x3, t2);
+    bn_256_GFp_sub(x3, x3, t1);
+    bn_256_GFp_sub(x3, x3, t4);
+    bn_256_GFp_sub(t3, t3, x3);
+    bn_256_GFp_mul(t3, t3, t2);
+    bn_256_GFp_mul(t4, t4, y1);
+    bn_256_GFp_sub(y3, t3, t4);
+}
+
+void sm2_point_mul(SM2_JPOINT* r, const SM2_POINT* a, const BN_256 k){
+	int i,j;
+	BN_UNIT e;
+	bn_256_set_word(r->x,1);
+	bn_256_set_word(r->y,1);
+	bn_256_set_zero(r->z);
+	for(i=0;i<BN_256_LEN;i++){
+		e=k[i];
+		for(j=BN_UNIT_LEN-1;j>=0;--j){
+			sm2_jpoint_dbl(r,r);
+			if((e>>j)&((BN_UNIT)1)){
+				sm2_jpoint_add_point(r,r,a);
+			}
+		}
+	}
 }

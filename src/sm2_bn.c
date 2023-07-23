@@ -24,8 +24,9 @@ void bn_256_GFp_sub(BN_256_GFp r, const BN_256_GFp a, const BN_256_GFp b){
 	if(bn_256_cmp(a,b)>=0){
 		bn_256_sub(r,a,b);
 	}else{
-		bn_256_sub(r,SM2_P,b);
-		bn_256_inc(r,a);
+		BN_256 t;
+		bn_256_sub(t,SM2_P,b);
+		bn_256_add(r,t,a);
 	}
 }
 
@@ -61,7 +62,7 @@ void bn_256_GFp_mul(BN_256_GFp r, const BN_256_GFp a, const BN_256_GFp b){
 	q1 = bn_512_h256(X);
 	bn_256_mul(q2m,q1,TWO_POWED_512_DIV_SM2_P);
 	q2 = bn_512_h256(q2m);
-	//问题在于该处可能发生进位，即q3超过了256位，所以仅当ab超过P很多时会发生
+	//问题在于该处可能发生进位，即q3超过了256位，所以仅当a*b超过P*P很多时会发生
 	//具体阈值不明确（懒得算），但是该函数传入的ab参数应该在GF(P)中
 	bn_256_add(q3,q2,q1);
 	bn_256_mul(q3p,q3,SM2_P);
@@ -192,14 +193,10 @@ void bn_256_GFp_mont_redc(BN_256_GFp r, const BN_512 X){
 	BN_512 mP;
 	bn_256_imul(m,bn_512_l256(X),_P);
 	bn_256_mul(mP,m,SM2_P);
-	int f=__bn_512_h256_inc(mP,X);
-	bn_256_cpy(r,bn_512_h256(mP));
-	if(f!=0){
-		bn_256_add(r,bn_512_h256(mP),TWO_POWED_256_SUB_SM2_P);
-	}else if(bn_256_cmp(bn_512_h256(mP),SM2_P)>=0){
-		bn_256_sub(r,bn_512_h256(mP),SM2_P);
-	}else{
-		bn_256_cpy(r,bn_512_h256(mP));
+	if(__bn_512_h256_adc(r,mP,X)!=0){
+		bn_256_inc(r,TWO_POWED_256_SUB_SM2_P);
+	}else if(bn_256_cmp(r,SM2_P)>=0){
+		bn_256_sub(r,r,SM2_P);
 	}
 }
 

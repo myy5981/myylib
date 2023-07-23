@@ -49,7 +49,6 @@ int bn_256_adc(BN_256 r, const BN_256 a, const BN_256 b){
 	);
 	return f;
 }
-#undef __ADC_ASM_UNIT_1__
 
 #define __INC_ASM_UNIT_1__(x) \
 		"movl "#x"(%1), %%eax\n\t"\
@@ -219,7 +218,6 @@ void bn_256_from_bin(BN_256 bn, uint8_t* src){
 		"adcl %%eax, "#h"(%0)\n\t"\
 		"movl (%3), %%eax\n\t"\
 		"adcl %%eax, "#i"(%0)\n\t"
-
 
 void bn_256_mul(BN_512 r, const BN_256 a, const BN_256 b){
 	BN_288 t={0};
@@ -493,21 +491,19 @@ void bn_256_imul(BN_256 r, const BN_256 a, const BN_256 b){
 		:"eax","ebx","edx"
 	);
 }
-/*
---------|--------
-	   J|ABCDEFGH
-	  JA|BCDEFGH
-	 JAB|CDEFGH
-	JABC|DEFGH
-   JABCD|EFGH
-  JABCDE|FGH
- JABCDEF|GH
-JABCDEFG|H
-*/
+
+void bn_256_cpy(BN_256 r, const BN_256 a){
+	r[0]=a[0];r[1]=a[1];
+	r[2]=a[2];r[3]=a[3];
+	r[4]=a[4];r[5]=a[5];
+	r[6]=a[6];r[7]=a[7];
+}
+
 #undef __MUL_ASM_UNIT_1__
 #undef __MUL_ASM_UNIT_2__
 #undef __MUL_ASM_UNIT_3__
 
+/* r=a-b，取512位数ab的低288位，将其相减 */
 void __bn_288_sub(BN_512 r, const BN_512 a, const BN_512 b){
 	asm volatile (
 		"movl 60(%1), %%eax\n\t"
@@ -542,6 +538,7 @@ void __bn_288_sub(BN_512 r, const BN_512 a, const BN_512 b){
 	);
 }
 
+/* r=r-b，取512的低288位，将其减去一个256位 */
 void __bn_288_sbb_256(BN_512 r, const BN_256 b){
 	asm volatile(
 		"movl 28(%1), %%eax\n\t"
@@ -566,6 +563,7 @@ void __bn_288_sbb_256(BN_512 r, const BN_256 b){
 	);
 }
 
+/* 将一个512位的低288位与一个256位比较，256位数视为前方补零的288位数 */
 int __bn_288_cmp_256(const BN_512 a, const BN_256 b){
 	if(a[7]>0){
 		return 1;
@@ -573,27 +571,25 @@ int __bn_288_cmp_256(const BN_512 a, const BN_256 b){
 	return bn_256_cmp(bn_512_l256(a),b);
 }
 
-#define __INC_ASM_UNIT_2__(x) \
-		"movl "#x"(%2), %%eax\n\t"\
-		"adcl %%eax, "#x"(%1)\n\t"
-int __bn_512_h256_inc(BN_512 a, const BN_512 b){
+/* 将两个512位的高256位相加，还要加上一位进位，因为已知a+b的结果低256位为0 */
+int __bn_512_h256_adc(BN_256 r, const BN_512 a, const BN_512 b){
 	int f=0;
 	asm volatile(
 		"stc\n\t"
-		__INC_ASM_UNIT_2__(28)
-		__INC_ASM_UNIT_2__(24)
-		__INC_ASM_UNIT_2__(20)
-		__INC_ASM_UNIT_2__(16)
-		__INC_ASM_UNIT_2__(12)
-		__INC_ASM_UNIT_2__(8)
-		__INC_ASM_UNIT_2__(4)
-		__INC_ASM_UNIT_2__()
+		__ADC_ASM_UNIT_1__(28)
+		__ADC_ASM_UNIT_1__(24)
+		__ADC_ASM_UNIT_1__(20)
+		__ADC_ASM_UNIT_1__(16)
+		__ADC_ASM_UNIT_1__(12)
+		__ADC_ASM_UNIT_1__(8)
+		__ADC_ASM_UNIT_1__(4)
+		__ADC_ASM_UNIT_1__()
 		"movl $0, %0\n\t"
 		"adcl $0, %0\n\t"
 		:"=r"(f)
-		:"r"(a),"r"(b)
+		:"r"(r),"r"(a),"r"(b)
 		:"eax"
 	);
 	return f;
 }
-#undef __INC_ASM_UNIT_2__
+#undef __ADC_ASM_UNIT_1__
