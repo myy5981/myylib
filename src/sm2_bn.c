@@ -11,6 +11,7 @@ static const BN_256 TWO_POWED_512_DIV_SM2_P	=	BN_256_INIT(00000001,00000001,0000
 static const BN_256 _P						=	BN_256_INIT(FFFFFFFC,00000001,FFFFFFFE,00000000,FFFFFFFF,00000001,00000000,00000001);
 // 2^512%p
 static const BN_256 RR_MOD_P				=	BN_256_INIT(00000004,00000002,00000001,00000001,00000002,FFFFFFFF,00000002,00000003);
+// 2_256%p
 
 void bn_256_GFp_add(BN_256_GFp r, const BN_256_GFp a, const BN_256_GFp b){
 	if(bn_256_adc(r,a,b)!=0){
@@ -62,8 +63,10 @@ void bn_256_GFp_mul(BN_256_GFp r, const BN_256_GFp a, const BN_256_GFp b){
 	q1 = bn_512_h256(X);
 	bn_256_mul(q2m,q1,TWO_POWED_512_DIV_SM2_P);
 	q2 = bn_512_h256(q2m);
-	//问题在于该处可能发生进位，即q3超过了256位，所以仅当a*b超过P*P很多时会发生
-	//具体阈值不明确（懒得算），但是该函数传入的ab参数应该在GF(P)中
+	/*
+		问题在于bn_256_add(q3,q2,q1)处可能发生进位，即q3超过了256位，所以仅当a*b超过P*P很多时会发生
+		具体阈值不明确（懒得算），但是该函数传入的ab参数应该在GF(P)中，故暂且不做修改
+	*/
 	bn_256_add(q3,q2,q1);
 	bn_256_mul(q3p,q3,SM2_P);
 	__bn_288_sub(R,X,q3p);
@@ -74,9 +77,9 @@ void bn_256_GFp_mul(BN_256_GFp r, const BN_256_GFp a, const BN_256_GFp b){
 }
 
 void bn_256_GFp_exp(BN_256_GFp r, const BN_256_GFp a, const BN_256 e){
-	BN_256_Mont A;
+	BN_256_GFp_Mont A;
 	bn_256_GFp_to_mont(A,a);
-	BN_256_Mont R=BN_256_ONE;
+	BN_256_GFp_Mont R=BN_256_ONE;
 	BN_512 T;
 	BN_UNIT n;
 	bn_256_GFp_to_mont(R,R);
@@ -108,8 +111,8 @@ void bn_256_GFp_exp(BN_256_GFp r, const BN_256_GFp a, const BN_256 e){
 #define __mont_mul(R,A,B) bn_256_mul(T,A,B);bn_256_GFp_mont_redc(R,T)
 void bn_256_GFp_inv(BN_256_GFp r, const BN_256_GFp a){
 	//r=a^(P-2)
-	BN_256_Mont A;BN_512 T;int i;
-	BN_256_Mont a1,a2,a3,a4,a5;
+	BN_256_GFp_Mont A;BN_512 T;int i;
+	BN_256_GFp_Mont a1,a2,a3,a4,a5;
 	bn_256_mul(T,a,RR_MOD_P);
 	bn_256_GFp_mont_redc(A,T);
 	__mont_sqr(a1,A);
@@ -185,10 +188,7 @@ void bn_256_GFp_inv(BN_256_GFp r, const BN_256_GFp a){
 	__mont_mul(r,a4,a5);
 	bn_256_mont_to_GFp(r,r);
 }
-#undef __mont_spr
-#undef __mont_mul
-
-void bn_256_GFp_mont_redc(BN_256_GFp r, const BN_512 X){
+void bn_256_GFp_mont_redc(BN_256_GFp_Mont r, const BN_512 X){
 	BN_256 m;
 	BN_512 mP;
 	bn_256_imul(m,bn_512_l256(X),_P);
@@ -200,7 +200,7 @@ void bn_256_GFp_mont_redc(BN_256_GFp r, const BN_512 X){
 	}
 }
 
-void bn_256_mont_to_GFp(BN_256_GFp r, const BN_256_Mont X){
+void bn_256_mont_to_GFp(BN_256_GFp r, const BN_256_GFp_Mont X){
 	BN_256 m;
 	BN_512 mP;
 	bn_256_imul(m,X,_P);
@@ -215,14 +215,100 @@ void bn_256_mont_to_GFp(BN_256_GFp r, const BN_256_Mont X){
 	}
 }
 
-void bn_256_GFp_to_mont(BN_256_Mont r,const BN_256_GFp X){
+void bn_256_GFp_to_mont(BN_256_GFp_Mont r,const BN_256_GFp X){
 	BN_512 XRR={0};
 	bn_256_mul(XRR,X,RR_MOD_P);
 	bn_256_GFp_mont_redc(r,XRR);
 }
 
-void bn_256_GFp_mul_mont(BN_256_Mont r, const BN_256_Mont a, const BN_256_Mont b){
+void bn_256_GFp_mul_mont(BN_256_GFp_Mont r, const BN_256_GFp_Mont a, const BN_256_GFp_Mont b){
 	BN_512 ab;
 	bn_256_mul(ab,a,b);
 	bn_256_GFp_mont_redc(r,ab);
+}
+
+void bn_256_GFp_inv_mont(BN_256_GFp_Mont r, const BN_256_GFp_Mont a){
+	//r=a^(P-2)
+	BN_512 T;int i;
+	BN_256_GFp_Mont a1,a2,a3,a4,a5;
+	__mont_sqr(a1,a);
+	__mont_mul(a2,a1,a);
+	__mont_sqr(a3,a2);
+	__mont_sqr(a3,a3);
+	__mont_mul(a3,a3,a2);
+	__mont_sqr(a4,a3);
+	__mont_sqr(a4,a4);
+	__mont_sqr(a4,a4);
+	__mont_sqr(a4,a4);
+	__mont_mul(a4,a4,a3);
+	__mont_sqr(a5,a4);
+	for (i = 1; i < 8; i++){
+		__mont_sqr(a5,a5);
+	}
+	__mont_mul(a5,a5,a4);
+	for (i = 0; i < 8; i++){
+		__mont_sqr(a5,a5);
+	}
+	__mont_mul(a5,a5,a4);
+	for (i = 0; i < 4; i++){
+		__mont_sqr(a5,a5);
+	}
+	__mont_mul(a5,a5,a3);
+	__mont_sqr(a5,a5);
+	__mont_sqr(a5,a5);
+	__mont_mul(a5,a5,a2);
+	__mont_sqr(a5,a5);
+	__mont_mul(a5,a5,a);
+	__mont_sqr(a4,a5);
+	__mont_mul(a3,a4,a1);
+	__mont_sqr(a5,a4);
+	for (i = 1; i< 31; i++){
+		__mont_sqr(a5,a5);
+	}
+	__mont_mul(a4,a5,a4);
+	__mont_sqr(a4,a4);
+	__mont_mul(a4,a4,a);
+	__mont_mul(a3,a4,a2);
+	for (i = 0; i < 33; i++){
+		__mont_sqr(a5,a5);
+	}
+	__mont_mul(a2,a5,a3);
+	__mont_mul(a3,a2,a3);
+	for (i = 0; i < 32; i++){
+		__mont_sqr(a5,a5);
+	}
+	__mont_mul(a2,a5,a3);
+	__mont_mul(a3,a2,a3);
+	__mont_mul(a4,a2,a4);
+	for (i = 0; i < 32; i++){
+		__mont_sqr(a5,a5);
+	}
+	__mont_mul(a2,a5,a3);
+	__mont_mul(a3,a2,a3);
+	__mont_mul(a4,a2,a4);
+	for (i = 0; i < 32; i++){
+		__mont_sqr(a5,a5);
+	}
+	__mont_mul(a2,a5,a3);
+	__mont_mul(a3,a2,a3);
+	__mont_mul(a4,a2,a4);
+	for (i = 0; i < 32; i++){
+		__mont_sqr(a5,a5);
+	}
+	__mont_mul(a2,a5,a3);
+	__mont_mul(a3,a2,a3);
+	__mont_mul(a4,a2,a4);
+	for (i = 0; i < 32; i++){
+		__mont_sqr(a5,a5);
+	}
+	__mont_mul(r,a4,a5);
+}
+#undef __mont_spr
+#undef __mont_mul
+int bn_256_GFp_is_one_mont(const BN_256_GFp_Mont a){
+	return bn_256_cmp(a,TWO_POWED_256_SUB_SM2_P)==0;
+}
+
+void bn_256_GFp_set_one_mont(BN_256_GFp_Mont a){
+	bn_256_cpy(a,TWO_POWED_256_SUB_SM2_P);
 }

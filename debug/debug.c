@@ -16,7 +16,7 @@
 // 	.y=BN_256_INIT(BC3736A2,F4F6779C,59BDCEE3,6B692153,D0A9877C,C62A4740,02DF32E5,2139F0A0),
 // 	.z=BN_256_ONE
 // };
-static const SM2_POINT __SM2_G={
+static SM2_POINT __SM2_G={
 	.x=BN_256_INIT(32C4AE2C,1F198119,5F990446,6A39C994,8FE30BBF,F2660BE1,715A4589,334C74C7),
 	.y=BN_256_INIT(BC3736A2,F4F6779C,59BDCEE3,6B692153,D0A9877C,C62A4740,02DF32E5,2139F0A0),
 };
@@ -32,15 +32,20 @@ int main(void){
 	SM2_POINT r;
 
 	gettimeofday(&begin,NULL);
+
+	sm2_point_to_mont(&__SM2_G);
 	for (int i = 0; i < TIMES; i++)
 	{
-		sm2_point_mul(&R,&__SM2_G,__SM2_B);
+		sm2_point_mul_mont(&R,&__SM2_G,__SM2_B);
 	}
+	
+	sm2_jpoint_to_point_mont(&r,&R);
+
+	sm2_point_from_mont(&r);
 	
 	gettimeofday(&end,NULL);
 	printf("myylibc cost:%ldus\n",(end.tv_sec-begin.tv_sec)*1000000+end.tv_usec-begin.tv_usec);
 
-	sm2_jpoint_to_point(&r,&R);
 	bn_256_to_bin(r.x,res);
 	hex_encode(res,32,hex,HEX_ENCODE_LOWER);
 	printf("x=%s\n",hex);
