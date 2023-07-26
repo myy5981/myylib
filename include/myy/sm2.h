@@ -3,8 +3,13 @@
 
 #include <myy/env.h>
 #include <myy/sm2_bn.h>
+#include <myy/sm3_kdf.h>
 
 __CPP_BEGIN
+
+/**
+ * SM2椭圆曲线点运算
+*/
 
 typedef struct _SM2_JPOINT {
 	BN_256 x;
@@ -17,7 +22,15 @@ typedef struct _SM2_POINT {
 	BN_256 y;
 } SM2_POINT;
 
-#define	sm2_jpoint_is_zero(p)	bn_256_is_zero((p)->z)
+extern const BN_256 SM2_N;
+extern SM2_POINT SM2_G_MONT;
+
+#define SM2_POINT_SERIALIZE_DEFAULT 0
+#define SM2_POINT_SERIALIZE_COMPRESS 1
+#define SM2_POINT_SERIALIZE_MIX 2
+
+#define	sm2_jpoint_is_zero(p)	bn_256_GFp_is_zero((p)->z)
+#define	sm2_point_is_zero(p)	(bn_256_GFp_is_zero((p)->x)&&bn_256_GFp_is_zero((p)->y))
 #define	sm2_jpoint_cpy(r,a)		bn_256_cpy((r)->x,(a)->x);bn_256_cpy((r)->y,(a)->y);bn_256_cpy((r)->z,(a)->z)
 
 extern	void	sm2_jpoint_to_point		(SM2_POINT* r, const SM2_JPOINT* a);
@@ -25,26 +38,51 @@ extern	void	sm2_point_to_jpoint		(SM2_JPOINT* r, const SM2_POINT* a);
 extern	void	sm2_jpoint_dbl			(SM2_JPOINT* r, const SM2_JPOINT* a);
 extern	void	sm2_jpoint_add_point	(SM2_JPOINT* r, const SM2_JPOINT* a, const SM2_POINT* b);
 extern	void	sm2_point_mul			(SM2_JPOINT* r, const SM2_POINT* a, const BN_256 k);
+extern	int		sm2_point_to_bin		(SM2_POINT* r, uint8_t* dst, int flag);
+/* 暂时仅支持默认编码方式 */
+extern	int		sm2_point_from_bin		(SM2_POINT* r, uint8_t* dst);
 
-/**
- * 基于蒙哥马利的点运算，效率比起上面的稍快一点，所有参与运算的点均需先转换为蒙哥马利域表示
-*/
+/* 基于蒙哥马利的点运算，效率比起上面的稍快一点，所有参与运算的点均需先转换为蒙哥马利域表示 */
 
 #define	sm2_jpoint_is_zero_mont(p)			bn_256_GFp_is_zero_mont((p)->z)
+#define	sm2_point_is_zero_mont(p)			(bn_256_GFp_is_zero_mont((p)->x)&&bn_256_GFp_is_zero_mont((p)->y))
 extern	void	sm2_jpoint_to_point_mont	(SM2_POINT* r, const SM2_JPOINT* a);
 extern	void	sm2_point_to_jpoint_mont	(SM2_JPOINT* r, const SM2_POINT* a);
 extern	void	sm2_jpoint_dbl_mont			(SM2_JPOINT* r, const SM2_JPOINT* a);
 extern	void	sm2_jpoint_add_point_mont	(SM2_JPOINT* r, const SM2_JPOINT* a, const SM2_POINT* b);
 extern	void	sm2_point_mul_mont			(SM2_JPOINT* r, const SM2_POINT* a, const BN_256 k);
+extern	int		sm2_point_to_bin_mont		(SM2_POINT* r, uint8_t* dst, int flag);
+/* 暂时仅支持默认编码方式 */
+extern	int		sm2_point_from_bin_mont		(SM2_POINT* r, uint8_t* dst);
+
+/* 将点转到蒙哥马利域的表示或从蒙哥马利域表示还原 */
+
+extern	void	sm2_jpoint_to_mont			(SM2_JPOINT* r,SM2_JPOINT* a);
+extern	void	sm2_jpoint_from_mont		(SM2_JPOINT* r,SM2_JPOINT* a);
+extern	void	sm2_point_to_mont			(SM2_POINT* r,SM2_POINT* a);
+extern	void	sm2_point_from_mont			(SM2_POINT* r,SM2_POINT* a);
 
 /**
- * 将点转到蒙哥马利域的表示或从蒙哥马利域表示还原
+ * SM2 密钥生成与验证
 */
 
-extern	void	sm2_jpoint_to_mont			(SM2_JPOINT* a);
-extern	void	sm2_jpoint_from_mont		(SM2_JPOINT* a);
-extern	void	sm2_point_to_mont			(SM2_POINT* a);
-extern	void	sm2_point_from_mont			(SM2_POINT* a);
+typedef SM2_POINT SM2_PUB_KEY;
+
+typedef struct _SM2_PRI_KEY{
+	BN_256 d;
+	SM2_PUB_KEY Pub;
+}SM2_PRI_KEY;
+
+extern	void	sm2_key_generate		(SM2_PRI_KEY* prik);
+extern	void	sm2_pub_key_generate	(SM2_PUB_KEY* pubk, SM2_PRI_KEY* prik);
+extern	int		sm2_pub_key_verify		(SM2_PUB_KEY* pubk);
+
+/**
+ * SM2公钥加密
+*/
+
+extern	int		sm2_encrypt	(SM2_PUB_KEY* key,uint8_t* m,int len,uint8_t* c);
+extern	int		sm2_decrypt	(SM2_PRI_KEY* key,uint8_t* c,int len,uint8_t* m);
 
 __CPP_END
 

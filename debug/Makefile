@@ -1,5 +1,5 @@
 CC = gcc -m64
-CFLAGS = -Wall -Werror -I../include -I../../GmSSL/include -g -std=c99 -c
+CFLAGS = -Wall -Werror -I../include -g -std=c99 -c
 
 default: build debug
 

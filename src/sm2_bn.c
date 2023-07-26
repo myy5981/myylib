@@ -11,7 +11,8 @@ static const BN_256 TWO_POWED_512_DIV_SM2_P	=	BN_256_INIT(00000001,00000001,0000
 static const BN_256 _P						=	BN_256_INIT(FFFFFFFC,00000001,FFFFFFFE,00000000,FFFFFFFF,00000001,00000000,00000001);
 // 2^512%p
 static const BN_256 RR_MOD_P				=	BN_256_INIT(00000004,00000002,00000001,00000001,00000002,FFFFFFFF,00000002,00000003);
-// 2_256%p
+// 2^256%p
+#define R_MOD_P TWO_POWED_256_SUB_SM2_P
 
 void bn_256_GFp_add(BN_256_GFp r, const BN_256_GFp a, const BN_256_GFp b){
 	if(bn_256_adc(r,a,b)!=0){
@@ -188,7 +189,16 @@ void bn_256_GFp_inv(BN_256_GFp r, const BN_256_GFp a){
 	__mont_mul(r,a4,a5);
 	bn_256_mont_to_GFp(r,r);
 }
+
 void bn_256_GFp_mont_redc(BN_256_GFp_Mont r, const BN_512 X){
+	if(bn_256_GFp_is_zero(bn_512_l256(X))){
+		if(bn_256_cmp(bn_512_h256(X),SM2_P)>=0){
+			bn_256_sub(r,bn_512_h256(X),SM2_P);
+		}else{
+			bn_256_cpy(r,bn_512_h256(X));
+		}
+		return;
+	}
 	BN_256 m;
 	BN_512 mP;
 	bn_256_imul(m,bn_512_l256(X),_P);
@@ -201,6 +211,10 @@ void bn_256_GFp_mont_redc(BN_256_GFp_Mont r, const BN_512 X){
 }
 
 void bn_256_mont_to_GFp(BN_256_GFp r, const BN_256_GFp_Mont X){
+	if(bn_256_GFp_is_zero_mont(X)){
+		bn_256_GFp_set_zero(r);
+		return;
+	}
 	BN_256 m;
 	BN_512 mP;
 	bn_256_imul(m,X,_P);
@@ -306,9 +320,9 @@ void bn_256_GFp_inv_mont(BN_256_GFp_Mont r, const BN_256_GFp_Mont a){
 #undef __mont_spr
 #undef __mont_mul
 int bn_256_GFp_is_one_mont(const BN_256_GFp_Mont a){
-	return bn_256_cmp(a,TWO_POWED_256_SUB_SM2_P)==0;
+	return bn_256_cmp(a,R_MOD_P)==0;
 }
 
 void bn_256_GFp_set_one_mont(BN_256_GFp_Mont a){
-	bn_256_cpy(a,TWO_POWED_256_SUB_SM2_P);
+	bn_256_cpy(a,R_MOD_P);
 }

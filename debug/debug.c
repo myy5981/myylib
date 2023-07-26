@@ -11,45 +11,36 @@
 #include <sys/time.h>
 #define TIMES 1
 
-// static const SM2_JPOINT SM2_G={
-// 	.x=BN_256_INIT(32C4AE2C,1F198119,5F990446,6A39C994,8FE30BBF,F2660BE1,715A4589,334C74C7),
-// 	.y=BN_256_INIT(BC3736A2,F4F6779C,59BDCEE3,6B692153,D0A9877C,C62A4740,02DF32E5,2139F0A0),
-// 	.z=BN_256_ONE
-// };
-static SM2_POINT __SM2_G={
-	.x=BN_256_INIT(32C4AE2C,1F198119,5F990446,6A39C994,8FE30BBF,F2660BE1,715A4589,334C74C7),
-	.y=BN_256_INIT(BC3736A2,F4F6779C,59BDCEE3,6B692153,D0A9877C,C62A4740,02DF32E5,2139F0A0),
-};
-static const BN_256 __SM2_B=BN_256_INIT(28E9FA9E,9D9F5E34,4D5A9E4B,CF6509A7,F39789F5,15AB8F92,DDBCBD41,4D940E93);
+char* str="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789myylibc";
+
 int main(void){
 	struct timeval begin;
 	struct timeval end;
 
-	uint8_t res[32]={0};
-	char hex[65]={0};
+	SM2_PRI_KEY key;
+	BN_256 k=BN_256_INIT(3945208F,7B2144B1,3F36E38A,C6D39F95,88939369,2860B51A,42FB81EF,4DF7C5B8);
+	bn_256_cpy(key.d,k);
+	SM2_JPOINT pub;
+	sm2_point_mul_mont(&pub,&SM2_G_MONT,key.d);
+	sm2_jpoint_to_point_mont(&(key.Pub),&pub);
+	sm2_point_from_mont(&(key.Pub),&(key.Pub));
 
-	SM2_JPOINT R;
-	SM2_POINT r;
+	uint8_t buf[512]={0};
 
 	gettimeofday(&begin,NULL);
 
-	sm2_point_to_mont(&__SM2_G);
-	for (int i = 0; i < TIMES; i++)
-	{
-		sm2_point_mul_mont(&R,&__SM2_G,__SM2_B);
-	}
-	
-	sm2_jpoint_to_point_mont(&r,&R);
+	int r = sm2_encrypt(&(key.Pub),(uint8_t*)str,69,buf);
 
-	sm2_point_from_mont(&r);
+	char m[512]={0};
+	int ret = sm2_decrypt(&key,buf,r,(uint8_t*)m);
 	
 	gettimeofday(&end,NULL);
 	printf("myylibc cost:%ldus\n",(end.tv_sec-begin.tv_sec)*1000000+end.tv_usec-begin.tv_usec);
 
-	bn_256_to_bin(r.x,res);
-	hex_encode(res,32,hex,HEX_ENCODE_LOWER);
-	printf("x=%s\n",hex);
-	bn_256_to_bin(r.y,res);
-	hex_encode(res,32,hex,HEX_ENCODE_LOWER);
-	printf("y=%s\n",hex);
+	hex_enc2stream(stdout,buf,1);
+	printf("\n");
+	hex_enc2stream(stdout,buf+1,r-1);
+	printf("\n");
+
+	printf("de %d bytes:%s\n",ret,m);
 }

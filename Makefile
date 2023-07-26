@@ -16,7 +16,10 @@ OBJ = obj/endian.o\
 		obj/algorithm.o\
 		obj/bignum.o\
 		obj/sm2_bn.o\
-		obj/sm2.o
+		obj/sm2_point.o\
+		obj/sm2_key.o\
+		obj/random.o\
+		obj/sm2_enc.o
 
 .PHONY: debug
 debug: CLEVEL = -g -fdiagnostics-color=always

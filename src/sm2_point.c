@@ -302,24 +302,79 @@ void sm2_point_mul_mont(SM2_JPOINT* r, const SM2_POINT* a, const BN_256 k){
 	}
 }
 
-void sm2_jpoint_to_mont(SM2_JPOINT* a){
-	bn_256_GFp_to_mont(a->x,a->x);
-	bn_256_GFp_to_mont(a->y,a->y);
-	bn_256_GFp_to_mont(a->z,a->z);
+void sm2_jpoint_to_mont(SM2_JPOINT* r,SM2_JPOINT* a){
+	bn_256_GFp_to_mont(r->x,a->x);
+	bn_256_GFp_to_mont(r->y,a->y);
+	bn_256_GFp_to_mont(r->z,a->z);
 }
 
-void sm2_jpoint_from_mont(SM2_JPOINT* a){
-	bn_256_mont_to_GFp(a->x,a->x);
-	bn_256_mont_to_GFp(a->y,a->y);
-	bn_256_mont_to_GFp(a->z,a->z);
+void sm2_jpoint_from_mont(SM2_JPOINT* r,SM2_JPOINT* a){
+	bn_256_mont_to_GFp(r->x,a->x);
+	bn_256_mont_to_GFp(r->y,a->y);
+	bn_256_mont_to_GFp(r->z,a->z);
 }
 
-void sm2_point_to_mont(SM2_POINT* a){
-	bn_256_GFp_to_mont(a->x,a->x);
-	bn_256_GFp_to_mont(a->y,a->y);
+void sm2_point_to_mont(SM2_POINT* r,SM2_POINT* a){
+	bn_256_GFp_to_mont(r->x,a->x);
+	bn_256_GFp_to_mont(r->y,a->y);
 }
 
-void sm2_point_from_mont(SM2_POINT* a){
-	bn_256_mont_to_GFp(a->x,a->x);
-	bn_256_mont_to_GFp(a->y,a->y);
+void sm2_point_from_mont(SM2_POINT* r,SM2_POINT* a){
+	bn_256_mont_to_GFp(r->x,a->x);
+	bn_256_mont_to_GFp(r->y,a->y);
+}
+
+int sm2_point_to_bin(SM2_POINT* r, uint8_t* dst, int flag){
+	switch (flag)
+	{
+	case SM2_POINT_SERIALIZE_DEFAULT:
+		dst[0]=0x04;
+		bn_256_to_bin(r->x,dst+1);
+		bn_256_to_bin(r->y,dst+33);
+		return 65;
+	case SM2_POINT_SERIALIZE_COMPRESS:
+		if(bn_256_is_odd(r->y)){
+			dst[0]=0x03;
+		}else{
+			dst[0]=0x02;
+		}
+		bn_256_to_bin(r->x,dst+1);
+		return 33;
+	case SM2_POINT_SERIALIZE_MIX:
+		if(bn_256_is_odd(r->y)){
+			dst[0]=0x07;
+		}else{
+			dst[0]=0x06;
+		}
+		bn_256_to_bin(r->x,dst+1);
+		bn_256_to_bin(r->y,dst+33);
+		return 65;
+	default:
+		return 0;
+	}
+}
+
+int sm2_point_to_bin_mont(SM2_POINT* r, uint8_t* dst, int flag){
+	SM2_POINT T;
+	sm2_point_from_mont(&T,r);
+	return sm2_point_to_bin(&T,dst,flag);
+}
+
+int sm2_point_from_bin(SM2_POINT* r, uint8_t* dst){
+	if(dst[0]!=0x04){
+		return 1;
+	}
+	bn_256_from_bin(r->x,dst+1);
+	bn_256_from_bin(r->y,dst+33);
+	return 65;
+}
+
+int sm2_point_from_bin_mont(SM2_POINT* r, uint8_t* dst){
+	if(dst[0]!=0x04){
+		return 1;
+	}
+	bn_256_from_bin(r->x,dst+1);
+	bn_256_from_bin(r->y,dst+33);
+	sm2_point_to_mont(r,r);
+	return 65;
 }

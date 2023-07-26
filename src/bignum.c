@@ -339,6 +339,7 @@ int __bn_288_cmp_256(const BN_512 a, const BN_256 b){
 }
 
 /* 将两个512位的高256位相加，还要加上一位进位，因为已知a+b的结果低256位为0 */
+/* 但如此一来需要确定b的低256位不为0,否则没有进位 */
 int __bn_512_h256_adc(BN_256 r, const BN_512 a, const BN_512 b){
 	int f=0;
 	asm volatile(
