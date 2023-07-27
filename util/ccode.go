@@ -75,5 +75,5 @@ func main() {
 	for _, file := range files {
 		doFile(file)
 	}
-	fmt.Printf("总共：%d行，%dKB\n", NN, TT)
+	fmt.Printf("总共：%d行，%dKB\n", NN, TT/1024)
 }
