@@ -9,9 +9,6 @@ util/*
 !util/*.go
 !util/Makefile
 
-**/x86
-**/x86_64
-
 debug/*
 !debug/debug.c
 !debug/Makefile
