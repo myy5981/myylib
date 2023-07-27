@@ -11,7 +11,7 @@
 //                                    4c7fdb4f31c1091cca087b69edf997dc39d69aa06773964ec118dbfa703d0741
 int main(int argc,char* argv[]){
 	if(argc!=3){
-		printf("usage: sm2pump [payload file path] [append file path]\n");
+		printf("usage: sm3pump [payload file path] [append file path]\n");
 		return 0;
 	}
 	char hash_hex[65]={0};
