@@ -81,7 +81,13 @@ extern	int		sm2_pub_key_verify		(SM2_PUB_KEY* pubk);
  * SM2公钥加密
 */
 
+/**
+ * 返回向c中输出的字节数，当返回值小于零时错误
+*/
 extern	int		sm2_encrypt	(SM2_PUB_KEY* key,uint8_t* m,int len,uint8_t* c);
+/**
+ * 返回向m中输出的字节数，当返回值小于零时错误
+*/
 extern	int		sm2_decrypt	(SM2_PRI_KEY* key,uint8_t* c,int len,uint8_t* m);
 
 __CPP_END

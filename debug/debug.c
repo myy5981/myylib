@@ -3,6 +3,7 @@
 #include <myy/hex.h>
 
 #include <stdio.h>
+#include <string.h>
 
 //#include <openssl/bn.h>
 
@@ -11,7 +12,7 @@
 #include <sys/time.h>
 #define TIMES 1
 
-char* str="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789myylibc";
+char* str="01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345";
 
 int main(void){
 	struct timeval begin;
@@ -25,17 +26,19 @@ int main(void){
 	sm2_jpoint_to_point_mont(&(key.Pub),&pub);
 	sm2_point_from_mont(&(key.Pub),&(key.Pub));
 
-	uint8_t buf[512]={0};
+	uint8_t buf[1024]={0};
 
 	gettimeofday(&begin,NULL);
 
-	int r = sm2_encrypt(&(key.Pub),(uint8_t*)str,69,buf);
+	int r = sm2_encrypt(&(key.Pub),(uint8_t*)str,strlen(str),buf);
 
-	char m[512]={0};
+	char m[1024]={0};
 	int ret = sm2_decrypt(&key,buf,r,(uint8_t*)m);
 	
 	gettimeofday(&end,NULL);
 	printf("myylibc cost:%ldus\n",(end.tv_sec-begin.tv_sec)*1000000+end.tv_usec-begin.tv_usec);
+
+	printf("enc %d bytes\n",r);
 
 	hex_enc2stream(stdout,buf,1);
 	printf("\n");

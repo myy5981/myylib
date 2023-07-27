@@ -58,6 +58,9 @@ int sm2_decrypt(SM2_PRI_KEY* key,uint8_t* c,int len,uint8_t* m){
 	SM3_CTX _hctx,*hctx=&_hctx;
 	SM3_KDF_CTX _kctx,*kctx=&_kctx;
 	int r = sm2_point_from_bin_mont(kp,c);
+	if(r<=0){
+		return -1;
+	}
 	sm2_point_mul_mont(t,kp,key->d);
 	sm2_jpoint_to_point_mont(kp,t);
 	sm2_point_from_mont(kp,kp);

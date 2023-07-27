@@ -362,7 +362,7 @@ int sm2_point_to_bin_mont(SM2_POINT* r, uint8_t* dst, int flag){
 
 int sm2_point_from_bin(SM2_POINT* r, uint8_t* dst){
 	if(dst[0]!=0x04){
-		return 1;
+		return -1;
 	}
 	bn_256_from_bin(r->x,dst+1);
 	bn_256_from_bin(r->y,dst+33);
@@ -371,7 +371,7 @@ int sm2_point_from_bin(SM2_POINT* r, uint8_t* dst){
 
 int sm2_point_from_bin_mont(SM2_POINT* r, uint8_t* dst){
 	if(dst[0]!=0x04){
-		return 1;
+		return -1;
 	}
 	bn_256_from_bin(r->x,dst+1);
 	bn_256_from_bin(r->y,dst+33);
