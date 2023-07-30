@@ -86,10 +86,10 @@ void sm2_jpoint_dbl(SM2_JPOINT* r, const SM2_JPOINT* a){
 	bn_256_GFp_sub(y3,y3,la_3);
 	//九次乘法，九次加减
 	//而gmssl八次乘法九次加减，一次取半（取半为一次位移和至多一次加法）
-	//这次是我败了2333
 }
 
 // 对不起，这个直接🇰🇷了，来源于gmssl:src/sm2_alg.c/sm2_jacobian_point_add
+// 反正公式已经写在文档里了，主要就是如何最大程度利用中间变量以减少计算，以及如何最大程度减少中间变量数量
 void sm2_jpoint_add_point(SM2_JPOINT* r, const SM2_JPOINT* a, const SM2_POINT* b){
 
 	if(sm2_jpoint_is_zero(a)){
@@ -130,15 +130,15 @@ void sm2_jpoint_add_point(SM2_JPOINT* r, const SM2_JPOINT* a, const SM2_POINT* b
 	bn_256_GFp_mul(z3,z1,t1);
 	bn_256_GFp_sqr(t3,t1);
 	bn_256_GFp_mul(t4,t3,t1);
-    bn_256_GFp_mul(t3, t3, x1);
-    bn_256_GFp_dbl(t1, t3);
-    bn_256_GFp_sqr(x3, t2);
-    bn_256_GFp_sub(x3, x3, t1);
-    bn_256_GFp_sub(x3, x3, t4);
-    bn_256_GFp_sub(t3, t3, x3);
-    bn_256_GFp_mul(t3, t3, t2);
-    bn_256_GFp_mul(t4, t4, y1);
-    bn_256_GFp_sub(y3, t3, t4);
+	bn_256_GFp_mul(t3, t3, x1);
+	bn_256_GFp_dbl(t1, t3);
+	bn_256_GFp_sqr(x3, t2);
+	bn_256_GFp_sub(x3, x3, t1);
+	bn_256_GFp_sub(x3, x3, t4);
+	bn_256_GFp_sub(t3, t3, x3);
+	bn_256_GFp_mul(t3, t3, t2);
+	bn_256_GFp_mul(t4, t4, y1);
+	bn_256_GFp_sub(y3, t3, t4);
 }
 
 void sm2_point_mul(SM2_JPOINT* r, const SM2_POINT* a, const BN_256 k){
@@ -231,7 +231,6 @@ void sm2_jpoint_dbl_mont(SM2_JPOINT* r, const SM2_JPOINT* a){
 	bn_256_GFp_sub_mont(y3,y3,la_3);
 	//九次乘法，九次加减
 	//而gmssl八次乘法九次加减，一次取半（取半为一次位移和至多一次加法）
-	//这次是我败了2333
 }
 
 void sm2_jpoint_add_point_mont(SM2_JPOINT* r, const SM2_JPOINT* a, const SM2_POINT* b){
@@ -274,15 +273,15 @@ void sm2_jpoint_add_point_mont(SM2_JPOINT* r, const SM2_JPOINT* a, const SM2_POI
 	bn_256_GFp_mul_mont(z3,z1,t1);
 	bn_256_GFp_sqr_mont(t3,t1);
 	bn_256_GFp_mul_mont(t4,t3,t1);
-    bn_256_GFp_mul_mont(t3, t3, x1);
-    bn_256_GFp_dbl_mont(t1, t3);
-    bn_256_GFp_sqr_mont(x3, t2);
-    bn_256_GFp_sub_mont(x3, x3, t1);
-    bn_256_GFp_sub_mont(x3, x3, t4);
-    bn_256_GFp_sub_mont(t3, t3, x3);
-    bn_256_GFp_mul_mont(t3, t3, t2);
-    bn_256_GFp_mul_mont(t4, t4, y1);
-    bn_256_GFp_sub_mont(y3, t3, t4);
+	bn_256_GFp_mul_mont(t3, t3, x1);
+	bn_256_GFp_dbl_mont(t1, t3);
+	bn_256_GFp_sqr_mont(x3, t2);
+	bn_256_GFp_sub_mont(x3, x3, t1);
+	bn_256_GFp_sub_mont(x3, x3, t4);
+	bn_256_GFp_sub_mont(t3, t3, x3);
+	bn_256_GFp_mul_mont(t3, t3, t2);
+	bn_256_GFp_mul_mont(t4, t4, y1);
+	bn_256_GFp_sub_mont(y3, t3, t4);
 }
 
 void sm2_point_mul_mont(SM2_JPOINT* r, const SM2_POINT* a, const BN_256 k){
