@@ -6,7 +6,11 @@
 
 __CPP_BEGIN
 
+#define BN_256_SM2_P BN_256_INIT(FFFFFFFE,FFFFFFFF,FFFFFFFF,FFFFFFFF,FFFFFFFF,00000000,FFFFFFFF,FFFFFFFF)
+#define BN_256_SM2_N BN_256_INIT(FFFFFFFE,FFFFFFFF,FFFFFFFF,FFFFFFFF,7203DF6B,21C6052B,53BBF409,39D54123)
+
 extern const BN_256 SM2_P;
+extern const BN_256 SM2_N;
 
 /* 定义在素数域GF(P)上的256位整数 */
 typedef	BN_256		BN_256_GFp;
@@ -17,6 +21,7 @@ extern	void	bn_256_GFp_sub	(BN_256_GFp r, const BN_256_GFp a, const BN_256_GFp b
 extern	void	bn_256_GFp_neg	(BN_256_GFp r, const BN_256_GFp a);
 extern	void	bn_256_GFp_mul	(BN_256_GFp r, const BN_256_GFp a, const BN_256_GFp b);
 extern	void	bn_256_GFp_exp	(BN_256_GFp r, const BN_256_GFp a, const BN_256 e);
+extern	void	bn_256_GFp_new_inv(BN_256_GFp r, const BN_256_GFp a);
 extern	void	bn_256_GFp_inv	(BN_256_GFp r, const BN_256_GFp a);
 extern	int		bn_256_GFp_sqrt	(BN_256_GFp r, const BN_256_GFp a);
 #define	bn_256_GFp_dbl(r,a)		bn_256_GFp_add(r,a,a)
@@ -54,6 +59,16 @@ extern	void	bn_256_GFp_set_one_mont	(BN_256_GFp_Mont a);
 #define bn_256_GFp_eql_mont(a,b)		(bn_256_cmp(a,b)==0)
 #define bn_256_GFp_is_zero_mont(n)		bn_256_is_zero(n)
 #define bn_256_GFp_set_zero_mont(n)		bn_256_set_zero(n)
+
+/* 定义在素数域GF(N)上的256位整数 */
+typedef BN_256 BN_256_GFn;
+typedef BN_256_ptr BN_256_GFn_ptr;
+
+extern	void	bn_256_GFn_add	(BN_256_GFn r, const BN_256_GFn a, const BN_256_GFn b);
+extern	void	bn_256_GFn_sub	(BN_256_GFn r, const BN_256_GFn a, const BN_256_GFn b);
+extern	void	bn_256_GFn_mul	(BN_256_GFn r, const BN_256_GFn a, const BN_256_GFn b);
+extern	void	bn_256_GFn_inv	(BN_256_GFn r, const BN_256_GFn a);
+
 __CPP_END
 
 #endif

@@ -14,11 +14,12 @@ OBJ = obj/endian.o\
 		obj/sm4.o\
 		obj/url_base64.o\
 		obj/algorithm.o\
+		obj/random.o\
 		obj/bignum.o\
-		obj/sm2_bn.o\
+		obj/sm2_gfp.o\
+		obj/sm2_gfn.o\
 		obj/sm2_point.o\
 		obj/sm2_key.o\
-		obj/random.o\
 		obj/sm2_enc.o
 
 .PHONY: debug

@@ -22,7 +22,6 @@ typedef struct _SM2_POINT {
 	BN_256 y;
 } SM2_POINT;
 
-extern const BN_256 SM2_N;
 extern SM2_POINT SM2_G_MONT;
 
 #define SM2_POINT_SERIALIZE_DEFAULT 0

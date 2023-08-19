@@ -44,7 +44,13 @@ typedef	uint64_t*	BN_512_ptr;
 #define	bn_256_is_zero(n)		(((n)[0]==0)&&((n)[1]==0)&&((n)[2]==0)&&((n)[3]==0))
 #define	bn_256_is_one(n)		(((n)[0]==0)&&((n)[1]==0)&&((n)[2]==0)&&((n)[3]==1))
 #define	bn_256_is_odd(n)		(n[3]&((BN_UNIT)0x01))
-#define bn_256_set_one(n) bn_256_set_word(n,1)
+#define bn_256_set_one(n)		bn_256_set_word(n,1)
+
+#define bn_256_rshift(n,x)		(n)[3]=((n)[3]>>(x))|((n)[2]<<(64-(x)));\
+								(n)[2]=((n)[2]>>(x))|((n)[1]<<(64-(x)));\
+								(n)[1]=((n)[1]>>(x))|((n)[0]<<(64-(x)));\
+								(n)[0]=(n)[0]>>(x)
+
 /* 如果发生进位则返回1，否则返回0 */
 extern	int		bn_256_adc		(BN_256 r, const BN_256 a, const BN_256 b);
 extern	void	bn_256_add		(BN_256 r, const BN_256 a, const BN_256 b);
