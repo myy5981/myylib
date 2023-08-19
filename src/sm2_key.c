@@ -24,6 +24,15 @@ void sm2_key_generate(SM2_PRI_KEY* prik){
 	sm2_point_from_mont(&(prik->Pub),&(prik->Pub));
 }
 
+void sm2_key_extend (SM2_PRI_KEY_EXT* kext, SM2_PRI_KEY* prik){
+	bn_256_cpy(kext->key.d,prik->d);
+	bn_256_cpy(kext->key.Pub.x,prik->Pub.x);
+	bn_256_cpy(kext->key.Pub.y,prik->Pub.y);
+	bn_256_cpy(kext->d1_inv,prik->d);
+	bn_256_inc1(kext->d1_inv);
+	bn_256_GFn_inv(kext->d1_inv,kext->d1_inv);
+}
+
 void sm2_pub_key_generate(SM2_PUB_KEY* pubk, SM2_PRI_KEY* prik){
 	bn_256_GFp_cpy_mont(pubk->x,prik->Pub.x);
 	bn_256_GFp_cpy_mont(pubk->y,prik->Pub.y);
@@ -58,4 +67,14 @@ int sm2_pub_key_verify(SM2_PUB_KEY* pubk){
 		return 0;
 	}
 	return 1;
+}
+
+void sm2_sig_to_bin(SM2_SIGNATURE* sig,uint8_t out[64]){
+	bn_256_to_bin(sig->r,out);
+	bn_256_to_bin(sig->s,out+32);
+}
+
+void sm2_sig_from_bin(SM2_SIGNATURE* sig,uint8_t in[64]){
+	bn_256_from_bin(sig->r,in);
+	bn_256_from_bin(sig->s,in+32);
 }

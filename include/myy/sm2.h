@@ -48,6 +48,7 @@ extern	int		sm2_point_from_bin		(SM2_POINT* r, uint8_t* dst);
 extern	void	sm2_jpoint_to_point_mont	(SM2_POINT* r, const SM2_JPOINT* a);
 extern	void	sm2_point_to_jpoint_mont	(SM2_JPOINT* r, const SM2_POINT* a);
 extern	void	sm2_jpoint_dbl_mont			(SM2_JPOINT* r, const SM2_JPOINT* a);
+extern	void	sm2_jpoint_add_mont			(SM2_JPOINT* r, const SM2_JPOINT* a, const SM2_JPOINT* b);
 extern	void	sm2_jpoint_add_point_mont	(SM2_JPOINT* r, const SM2_JPOINT* a, const SM2_POINT* b);
 extern	void	sm2_point_mul_mont			(SM2_JPOINT* r, const SM2_POINT* a, const BN_256 k);
 extern	int		sm2_point_to_bin_mont		(SM2_POINT* r, uint8_t* dst, int flag);
@@ -72,9 +73,16 @@ typedef struct _SM2_PRI_KEY{
 	SM2_PUB_KEY Pub;
 }SM2_PRI_KEY;
 
+typedef struct _SM2_PRI_KEY_EXT{
+	SM2_PRI_KEY key;
+	BN_256_GFn d1_inv;
+}SM2_PRI_KEY_EXT;
+
 extern	void	sm2_key_generate		(SM2_PRI_KEY* prik);
 extern	void	sm2_pub_key_generate	(SM2_PUB_KEY* pubk, SM2_PRI_KEY* prik);
 extern	int		sm2_pub_key_verify		(SM2_PUB_KEY* pubk);
+/* 根据私钥生成一些密钥扩展，用于加速后续的计算 */
+extern	void	sm2_key_extend			(SM2_PRI_KEY_EXT* kext, SM2_PRI_KEY* prik);
 
 /**
  * SM2公钥加密
@@ -88,6 +96,31 @@ extern	int		sm2_encrypt	(SM2_PUB_KEY* key,uint8_t* m,int len,uint8_t* c);
  * 返回向m中输出的字节数，当返回值小于零时错误
 */
 extern	int		sm2_decrypt	(SM2_PRI_KEY* key,uint8_t* c,int len,uint8_t* m);
+
+/**
+ * SM2数字签名
+*/
+
+typedef struct _SM2_SIGNATURE{
+	BN_256 r;
+	BN_256 s;
+}SM2_SIGNATURE;
+
+/**
+ * SM2数字签名的直接对象是用户的可辨识标识、椭圆曲线参数、公钥的杂凑值和待签名消息的杂凑值
+ * 本API中，在进行签名/验签前，需要先计算该值
+ * 在调用签名/验签API时，直接传入杂凑值即可
+*/
+
+extern	int		sm2_sig_init	(SM3_CTX* ctx, const SM2_PUB_KEY* key, uint8_t* id, int len);
+extern	int		sm2_sig_update	(SM3_CTX* ctx, uint8_t* message, size_t len);
+extern	void	sm2_sig_final	(SM3_CTX* ctx, uint8_t hash[32]);
+
+extern	void	sm2_sig_generate(SM2_SIGNATURE* sig, SM2_PRI_KEY_EXT* key, uint8_t hash[32]);
+extern	int		sm2_sig_verify	(SM2_SIGNATURE* sig, SM2_PUB_KEY* key, uint8_t hash[32]);
+
+extern	void	sm2_sig_to_bin	(SM2_SIGNATURE* sig,uint8_t out[64]);
+extern	void	sm2_sig_from_bin(SM2_SIGNATURE* sig,uint8_t in[64]);
 
 __CPP_END
 

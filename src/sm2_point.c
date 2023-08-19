@@ -233,6 +233,68 @@ void sm2_jpoint_dbl_mont(SM2_JPOINT* r, const SM2_JPOINT* a){
 	//而gmssl八次乘法九次加减，一次取半（取半为一次位移和至多一次加法）
 }
 
+void sm2_jpoint_add_mont(SM2_JPOINT* r, const SM2_JPOINT* a, const SM2_JPOINT* b){
+	if(sm2_jpoint_is_zero_mont(a)){
+		sm2_jpoint_cpy(r,b);
+		return;
+	}
+	if(sm2_jpoint_is_zero_mont(b)){
+		sm2_jpoint_cpy(r,a);
+		return;
+	}
+	BN_256_GFp_Mont_ptr x1=(BN_256_GFp_Mont_ptr)(a->x);
+	BN_256_GFp_Mont_ptr y1=(BN_256_GFp_Mont_ptr)(a->y);
+	BN_256_GFp_Mont_ptr z1=(BN_256_GFp_Mont_ptr)(a->z);
+	BN_256_GFp_Mont_ptr x2=(BN_256_GFp_Mont_ptr)(b->x);
+	BN_256_GFp_Mont_ptr y2=(BN_256_GFp_Mont_ptr)(b->y);
+	BN_256_GFp_Mont_ptr z2=(BN_256_GFp_Mont_ptr)(b->z);
+	BN_256_GFp_Mont_ptr x3=(BN_256_GFp_Mont_ptr)(r->x);
+	BN_256_GFp_Mont_ptr y3=(BN_256_GFp_Mont_ptr)(r->y);
+	BN_256_GFp_Mont_ptr z3=(BN_256_GFp_Mont_ptr)(r->z);
+
+	BN_256_GFp_Mont t1,t2,t3,t4,t5;
+	
+	bn_256_GFp_sqr_mont(t1,z2);
+	bn_256_GFp_mul_mont(t2,t1,x1);//t2=lamdba_1
+	bn_256_GFp_mul_mont(t1,t1,z2);
+	bn_256_GFp_mul_mont(t1,t1,y1);//t1=lamdba_4
+
+	bn_256_GFp_sqr_mont(t3,z1);
+	bn_256_GFp_mul_mont(t4,t3,x2);//t4=lamdba_2
+	bn_256_GFp_mul_mont(t3,t3,z1);
+	bn_256_GFp_mul_mont(t3,t3,y2);//t3=lamdba_5
+
+	bn_256_GFp_sub_mont(t3,t1,t3);//t3=lambda_6
+	bn_256_GFp_sub_mont(t5,t2,t4);//t5=lambda_3
+	if(bn_256_GFp_is_zero_mont(t5)){
+		if(bn_256_GFp_is_zero_mont(t3)){
+			sm2_jpoint_dbl_mont(r,b);
+			return;
+		}else{
+			bn_256_GFp_set_one_mont(r->x);
+			bn_256_GFp_set_one_mont(r->y);
+			bn_256_GFp_set_zero_mont(r->z);
+			return;
+		}
+	}
+
+	bn_256_GFp_add_mont(t4,t2,t4);//t4=lambda_7
+
+	bn_256_GFp_mul_mont(x3,z1,t5);
+	bn_256_GFp_mul_mont(z3,z2,x3);//z3 is done!
+
+	bn_256_GFp_mul_mont(t1,t1,t5);//t1=lamdba_4*lamdba_3
+	bn_256_GFp_sqr_mont(t5,t5);   //t5=lamdba_3*lamdba_3
+	bn_256_GFp_mul_mont(t4,t4,t5);//t4=lamdba_7*lamdba_3*lamdba_3
+	bn_256_GFp_sqr_mont(x3,t3);   //x3=lamdba_6*lambda_6
+	bn_256_GFp_sub_mont(x3,x3,t4);//x3 is done!
+	bn_256_GFp_mul_mont(t2,t2,t5);//t2=lamdba_1*lamdba_3*lamdba_3
+	bn_256_GFp_sub_mont(t2,t2,x3);//t2=lamdba_1*lamdba_3*lamdba_3-x3
+	bn_256_GFp_mul_mont(y3,t3,t2);
+	bn_256_GFp_mul_mont(t1,t1,t5);//t1=lamdba_4*lamdba_3^3
+	bn_256_GFp_sub_mont(y3,y3,t1);//y3 is done! over!
+}
+
 void sm2_jpoint_add_point_mont(SM2_JPOINT* r, const SM2_JPOINT* a, const SM2_POINT* b){
 
 	if(sm2_jpoint_is_zero_mont(a)){
