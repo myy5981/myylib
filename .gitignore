@@ -11,4 +11,7 @@ util/*
 
 debug/*
 !debug/debug.c
+!debug/task.h
+!debug/task.c
+!debug/debug
 !debug/Makefile

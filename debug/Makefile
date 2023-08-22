@@ -1,19 +1,16 @@
-CC = gcc -m64
-CFLAGS = -Wall -Werror -I../include -g -std=c99 -c
+default: build libtask.so
 
-default: build debug
-
-debug: debug.o
-	gcc -L../lib $^ -o $@ -lmyy -lcrypto
-
-debug.o: debug.c
-	$(CC) $(CFLAGS) $^ -o $@
+libtask.so: task.c
+	gcc -m64 -Wall -Werror -I../include -L../lib -g --shared -fPIC $^ -o $@ -lmyy
 
 .PHONY: clean
 clean:
-	rm -rf debug debug.o
+	rm -rf libtask.so
 	make clean -C ../
 
 .PHONY: build
 build: 
 	make debug -C ../
+
+debug: debug.c libtask.so
+	gcc -L./ $^ -o $@ -ltask
