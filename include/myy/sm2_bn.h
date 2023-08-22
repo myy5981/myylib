@@ -11,6 +11,7 @@ __CPP_BEGIN
 
 extern const BN_256 SM2_P;
 extern const BN_256 SM2_N;
+extern const BN_256 SM2_B;
 
 /* 定义在素数域GF(P)上的256位整数 */
 typedef	BN_256		BN_256_GFp;

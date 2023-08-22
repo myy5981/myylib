@@ -22,7 +22,7 @@ typedef struct _SM2_POINT {
 	BN_256 y;
 } SM2_POINT;
 
-extern SM2_POINT SM2_G_MONT;
+extern const SM2_POINT SM2_G_MONT;
 
 #define SM2_POINT_SERIALIZE_DEFAULT 0
 #define SM2_POINT_SERIALIZE_COMPRESS 1
@@ -38,8 +38,8 @@ extern	void	sm2_jpoint_dbl			(SM2_JPOINT* r, const SM2_JPOINT* a);
 extern	void	sm2_jpoint_add_point	(SM2_JPOINT* r, const SM2_JPOINT* a, const SM2_POINT* b);
 extern	void	sm2_point_mul			(SM2_JPOINT* r, const SM2_POINT* a, const BN_256 k);
 extern	int		sm2_point_to_bin		(SM2_POINT* r, uint8_t* dst, int flag);
-/* 暂时仅支持默认编码方式 */
 extern	int		sm2_point_from_bin		(SM2_POINT* r, uint8_t* dst);
+extern	int		sm2_point_is_on_cure	(const SM2_POINT* a);
 
 /* 基于蒙哥马利的点运算，效率比起上面的稍快一点，所有参与运算的点均需先转换为蒙哥马利域表示 */
 
@@ -52,8 +52,8 @@ extern	void	sm2_jpoint_add_mont			(SM2_JPOINT* r, const SM2_JPOINT* a, const SM2
 extern	void	sm2_jpoint_add_point_mont	(SM2_JPOINT* r, const SM2_JPOINT* a, const SM2_POINT* b);
 extern	void	sm2_point_mul_mont			(SM2_JPOINT* r, const SM2_POINT* a, const BN_256 k);
 extern	int		sm2_point_to_bin_mont		(SM2_POINT* r, uint8_t* dst, int flag);
-/* 暂时仅支持默认编码方式 */
 extern	int		sm2_point_from_bin_mont		(SM2_POINT* r, uint8_t* dst);
+extern	int		sm2_point_is_on_cure_mont	(const SM2_POINT* a);
 
 /* 将点转到蒙哥马利域的表示或从蒙哥马利域表示还原 */
 

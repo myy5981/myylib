@@ -253,10 +253,15 @@ void bn_256_GFp_inv(BN_256_GFp r, const BN_256_GFp a){
 
 int bn_256_GFp_sqrt(BN_256_GFp r, const BN_256_GFp a){
 	//r = a^(SM2_U+1)
-	bn_256_GFp_exp(r,a,SM2_U_ADD_1);
+	BN_256_GFp R;
+	bn_256_GFp_exp(R,a,SM2_U_ADD_1);
 	BN_256 t;
-	bn_256_GFp_sqr(t,r);
-	return bn_256_GFp_cmp(t,a)!=0;
+	bn_256_GFp_sqr(t,R);
+	if(bn_256_GFp_cmp(t,a)==0){
+		bn_256_cpy(r,&R);
+		return 0;
+	}
+	return 1;
 }
 
 void bn_256_GFp_mont_redc(BN_256_GFp_Mont r, const BN_512 X){
@@ -395,103 +400,108 @@ int bn_256_GFp_sqrt_mont(BN_256_GFp_Mont r, const BN_256_GFp_Mont a){
 		return 0;
 	}
 	BN_512 T;
+	BN_256_GFp_Mont R;
 	BN_256_GFp_Mont a1,a2,a3,a4,a5;
 	__mont_sqr(a1,a);		//a1=a^(10)
 	__mont_mul(a2,a1,a);	//a2=a^(11)
-	__mont_sqr(r,a2);
-	__mont_sqr(r,r);		//r=a^(1100)
-	__mont_mul(a3,r,a2);	//a3=a^(1111)
-	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_mul(r,r,a3);		//r=a^(111111)=a^(3F)
+	__mont_sqr(R,a2);
+	__mont_sqr(R,R);		//r=a^(1100)
+	__mont_mul(a3,R,a2);	//a3=a^(1111)
+	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_mul(R,R,a3);		//r=a^(111111)=a^(3F)
 	__mont_sqr(a4,a3);	__mont_sqr(a4,a4);	__mont_sqr(a4,a4);	__mont_sqr(a4,a4);
 	__mont_mul(a4,a4,a3);	//a4=a^(11111111)
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_mul(r,r,a4);		//r=a^(3FFF)
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_mul(R,R,a4);		//r=a^(3FFF)
 	__mont_sqr(a5,a4);	__mont_sqr(a5,a5);	__mont_sqr(a5,a5);	__mont_sqr(a5,a5);
 	__mont_sqr(a5,a5);	__mont_sqr(a5,a5);	__mont_sqr(a5,a5);	__mont_sqr(a5,a5);
 	__mont_mul(a5,a5,a4);	//a5=a^(1111111111111111)=a^(FFFF)
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_mul(r,r,a5);		//r=a^(3FFFFFFF)
-	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_mul(r,r,a1);
-	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_mul(r,r,a2);		//r=a^(3FFFFFFF B)
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_mul(r,r,a3);		//r=a^(3FFFFFFF BF)
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_mul(r,r,a4);		//r=a^(3FFFFFFF BFFF)
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_mul(r,r,a5);		//r=a^(3FFFFFFF BFFFFFFF)
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_mul(R,R,a5);		//r=a^(3FFFFFFF)
+	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_mul(R,R,a1);
+	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_mul(R,R,a2);		//r=a^(3FFFFFFF B)
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_mul(R,R,a3);		//r=a^(3FFFFFFF BF)
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_mul(R,R,a4);		//r=a^(3FFFFFFF BFFF)
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_mul(R,R,a5);		//r=a^(3FFFFFFF BFFFFFFF)
 	__mont_sqr(a4,a5);	__mont_sqr(a4,a4);	__mont_sqr(a4,a4);	__mont_sqr(a4,a4);
 	__mont_sqr(a4,a4);	__mont_sqr(a4,a4);	__mont_sqr(a4,a4);	__mont_sqr(a4,a4);
 	__mont_sqr(a4,a4);	__mont_sqr(a4,a4);	__mont_sqr(a4,a4);	__mont_sqr(a4,a4);
 	__mont_sqr(a4,a4);	__mont_sqr(a4,a4);	__mont_sqr(a4,a4);	__mont_sqr(a4,a4);
 	__mont_mul(a4,a4,a5);	//a4=a^(FFFFFFFF)
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_mul(r,r,a4);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_mul(r,r,a4);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_mul(r,r,a4);	//r=a^(3FFFFFFF BFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF)
-	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_mul(r,r,a2);	//r=a^(3FFFFFFF BFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF 11)
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_mul(r,r,a);	//r=a^(3FFFFFFF BFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF C0000000 01)
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);	__mont_sqr(r,r);
-	__mont_sqr(r,r);	__mont_sqr(r,r);//共298次乘法
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_mul(R,R,a4);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_mul(R,R,a4);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_mul(R,R,a4);	//r=a^(3FFFFFFF BFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF)
+	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_mul(R,R,a2);	//r=a^(3FFFFFFF BFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF 11)
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_mul(R,R,a);	//r=a^(3FFFFFFF BFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF C0000000 01)
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);	__mont_sqr(R,R);
+	__mont_sqr(R,R);	__mont_sqr(R,R);//共298次乘法
 
-	__mont_sqr(a1,r);
-	return bn_256_GFp_eql_mont(a1,a)!=1;
+	__mont_sqr(a1,R);
+	if(bn_256_GFp_eql_mont(a1,a)){
+		bn_256_cpy(r,&R);
+		return 0;
+	}
+	return 1;
 }
 #undef __mont_spr
 #undef __mont_mul

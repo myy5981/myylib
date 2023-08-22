@@ -385,6 +385,30 @@ void sm2_point_from_mont(SM2_POINT* r,SM2_POINT* a){
 	bn_256_mont_to_GFp(r->y,a->y);
 }
 
+int sm2_point_is_on_cure(const SM2_POINT* a){
+	BN_256_GFp t1,t2;
+	bn_256_GFp_sqr(t1,a->x);
+	bn_256_GFp_mul(t1,t1,a->x);
+	bn_256_GFp_dbl(t2,a->x);
+	bn_256_GFp_add(t2,t2,a->x);
+	bn_256_GFp_sub(t1,t1,t2);
+	bn_256_GFp_add(t1,t1,SM2_B);
+	bn_256_GFp_sqr(t2,a->y);
+	return bn_256_cmp(t1,t2)==0;
+}
+
+int sm2_point_is_on_cure_mont(const SM2_POINT* a){
+	BN_256_GFp_Mont t1,t2;
+	bn_256_GFp_sqr_mont(t1,a->x);
+	bn_256_GFp_mul_mont(t1,t1,a->x);
+	bn_256_GFp_dbl_mont(t2,a->x);
+	bn_256_GFp_add_mont(t2,t2,a->x);
+	bn_256_GFp_sub_mont(t1,t1,t2);
+	bn_256_GFp_add_mont(t1,t1,SM2_B);
+	bn_256_GFp_sqr_mont(t2,a->y);
+	return bn_256_cmp(t1,t2)==0;
+}
+
 int sm2_point_to_bin(SM2_POINT* r, uint8_t* dst, int flag){
 	switch (flag)
 	{
@@ -422,20 +446,80 @@ int sm2_point_to_bin_mont(SM2_POINT* r, uint8_t* dst, int flag){
 }
 
 int sm2_point_from_bin(SM2_POINT* r, uint8_t* dst){
-	if(dst[0]!=0x04){
-		return -1;
+	SM2_POINT t;
+	BN_256_GFp t1,t2;
+
+	if(dst[0]==0x04){//未压缩
+		bn_256_from_bin(t.x,dst+1);
+		bn_256_from_bin(t.y,dst+33);
+		if(sm2_point_is_on_cure(&t)){
+			bn_256_cpy(r->x,t.x);
+			bn_256_cpy(r->y,t.y);
+			return 0;
+		}
+	}else if(dst[0]==0x02){//压缩 y是偶数
+		bn_256_from_bin(t.x,dst+1);
+		bn_256_GFp_sqr(t1,t.x);
+		bn_256_GFp_mul(t1,t1,t.x);
+		bn_256_GFp_dbl(t.y,t.x);
+		bn_256_GFp_add(t.y,t.y,t.x);
+		bn_256_GFp_sub(t.y,t1,t.y);
+		bn_256_GFp_add(t.y,t.y,SM2_B);
+		bn_256_GFp_sqrt(t.y,t.y);
+		if(bn_256_is_odd(t.y)){
+			bn_256_sub(t.y,SM2_P,t.y);
+		}
+		if(sm2_point_is_on_cure(&t)){
+			bn_256_cpy(r->x,t.x);
+			bn_256_cpy(r->y,t.y);
+			return 0;
+		}
+	}else if(dst[0]==0x03){//压缩 y是奇数
+		bn_256_from_bin(t.x,dst+1);
+		bn_256_GFp_sqr(t1,t.x);
+		bn_256_GFp_mul(t1,t1,t.x);
+		bn_256_GFp_dbl(t.y,t.x);
+		bn_256_GFp_add(t.y,t.y,t.x);
+		bn_256_GFp_sub(t.y,t1,t.y);
+		bn_256_GFp_add(t.y,t.y,SM2_B);
+		bn_256_GFp_sqrt(t.y,t.y);
+		if(!bn_256_is_odd(t.y)){
+			bn_256_sub(t.y,SM2_P,t.y);
+		}
+		if(sm2_point_is_on_cure(&t)){
+			bn_256_cpy(r->x,t.x);
+			bn_256_cpy(r->y,t.y);
+			return 0;
+		}
+	}else if(dst[0]==0x06){//混合 y是偶数
+		bn_256_from_bin(t.x,dst+1);
+		bn_256_from_bin(t.y,dst+33);
+		if(!bn_256_is_odd(t.y)){
+			if(sm2_point_is_on_cure(&t)){
+				bn_256_cpy(r->x,t.x);
+				bn_256_cpy(r->y,t.y);
+				return 0;
+			}
+		}
+	}else if(dst[0]==0x07){//混合 y是奇数
+		bn_256_from_bin(t.x,dst+1);
+		bn_256_from_bin(t.y,dst+33);
+		if(bn_256_is_odd(t.y)){
+			if(sm2_point_is_on_cure(&t)){
+				bn_256_cpy(r->x,t.x);
+				bn_256_cpy(r->y,t.y);
+				return 0;
+			}
+		}
 	}
-	bn_256_from_bin(r->x,dst+1);
-	bn_256_from_bin(r->y,dst+33);
-	return 65;
+	return 1;
 }
 
 int sm2_point_from_bin_mont(SM2_POINT* r, uint8_t* dst){
-	if(dst[0]!=0x04){
-		return -1;
+	SM2_POINT R;
+	if(!sm2_point_from_bin(&R,dst)){
+		sm2_point_to_mont(r,&R);
+		return 0;
 	}
-	bn_256_from_bin(r->x,dst+1);
-	bn_256_from_bin(r->y,dst+33);
-	sm2_point_to_mont(r,r);
-	return 65;
+	return 1;
 }
