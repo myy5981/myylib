@@ -38,7 +38,7 @@ extern	void	sm2_jpoint_dbl			(SM2_JPOINT* r, const SM2_JPOINT* a);
 extern	void	sm2_jpoint_add_point	(SM2_JPOINT* r, const SM2_JPOINT* a, const SM2_POINT* b);
 extern	void	sm2_point_mul			(SM2_JPOINT* r, const SM2_POINT* a, const BN_256 k);
 extern	int		sm2_point_to_bin		(SM2_POINT* r, uint8_t* dst, int flag);
-extern	int		sm2_point_from_bin		(SM2_POINT* r, uint8_t* dst);
+extern	int		sm2_point_from_bin		(SM2_POINT* r, const uint8_t* dst);
 extern	int		sm2_point_is_on_cure	(const SM2_POINT* a);
 
 /* 基于蒙哥马利的点运算，效率比起上面的稍快一点，所有参与运算的点均需先转换为蒙哥马利域表示 */
@@ -52,15 +52,15 @@ extern	void	sm2_jpoint_add_mont			(SM2_JPOINT* r, const SM2_JPOINT* a, const SM2
 extern	void	sm2_jpoint_add_point_mont	(SM2_JPOINT* r, const SM2_JPOINT* a, const SM2_POINT* b);
 extern	void	sm2_point_mul_mont			(SM2_JPOINT* r, const SM2_POINT* a, const BN_256 k);
 extern	int		sm2_point_to_bin_mont		(SM2_POINT* r, uint8_t* dst, int flag);
-extern	int		sm2_point_from_bin_mont		(SM2_POINT* r, uint8_t* dst);
+extern	int		sm2_point_from_bin_mont		(SM2_POINT* r, const uint8_t* dst);
 extern	int		sm2_point_is_on_cure_mont	(const SM2_POINT* a);
 
 /* 将点转到蒙哥马利域的表示或从蒙哥马利域表示还原 */
 
-extern	void	sm2_jpoint_to_mont			(SM2_JPOINT* r,SM2_JPOINT* a);
-extern	void	sm2_jpoint_from_mont		(SM2_JPOINT* r,SM2_JPOINT* a);
-extern	void	sm2_point_to_mont			(SM2_POINT* r,SM2_POINT* a);
-extern	void	sm2_point_from_mont			(SM2_POINT* r,SM2_POINT* a);
+extern	void	sm2_jpoint_to_mont			(SM2_JPOINT* r,const SM2_JPOINT* a);
+extern	void	sm2_jpoint_from_mont		(SM2_JPOINT* r,const SM2_JPOINT* a);
+extern	void	sm2_point_to_mont			(SM2_POINT* r,const SM2_POINT* a);
+extern	void	sm2_point_from_mont			(SM2_POINT* r,const SM2_POINT* a);
 
 /**
  * SM2 密钥生成与验证
@@ -79,10 +79,10 @@ typedef struct _SM2_PRI_KEY_EXT{
 }SM2_PRI_KEY_EXT;
 
 extern	void	sm2_key_generate		(SM2_PRI_KEY* prik);
-extern	void	sm2_pub_key_generate	(SM2_PUB_KEY* pubk, SM2_PRI_KEY* prik);
-extern	int		sm2_pub_key_verify		(SM2_PUB_KEY* pubk);
+extern	void	sm2_pub_key_generate	(SM2_PUB_KEY* pubk, const SM2_PRI_KEY* prik);
+extern	int		sm2_pub_key_verify		(const SM2_PUB_KEY* pubk);
 /* 根据私钥生成一些密钥扩展，用于加速后续的计算 */
-extern	void	sm2_key_extend			(SM2_PRI_KEY_EXT* kext, SM2_PRI_KEY* prik);
+extern	void	sm2_key_extend			(SM2_PRI_KEY_EXT* kext, const SM2_PRI_KEY* prik);
 
 /**
  * SM2公钥加密
@@ -91,11 +91,17 @@ extern	void	sm2_key_extend			(SM2_PRI_KEY_EXT* kext, SM2_PRI_KEY* prik);
 /**
  * 返回向c中输出的字节数，当返回值小于零时错误
 */
-extern	int		sm2_encrypt	(SM2_PUB_KEY* key,uint8_t* m,int len,uint8_t* c);
+extern	int		sm2_encrypt	(SM2_PUB_KEY* key, const uint8_t* m, int len, uint8_t* c);
 /**
  * 返回向m中输出的字节数，当返回值小于零时错误
 */
-extern	int		sm2_decrypt	(SM2_PRI_KEY* key,uint8_t* c,int len,uint8_t* m);
+extern	int		sm2_decrypt	(SM2_PRI_KEY* key, const uint8_t* c, int len, uint8_t* m);
+
+/**
+ * 根据用户的公钥和标识生成用户标识
+ * 该实现位于sm2_sig.c中
+*/
+extern	int		sm2_id_generate	(uint8_t hash[32], const SM2_PUB_KEY* key, const uint8_t* id, int len);
 
 /**
  * SM2数字签名
@@ -112,15 +118,15 @@ typedef struct _SM2_SIGNATURE{
  * 在调用签名/验签API时，直接传入杂凑值即可
 */
 
-extern	int		sm2_sig_init	(SM3_CTX* ctx, const SM2_PUB_KEY* key, uint8_t* id, int len);
-extern	int		sm2_sig_update	(SM3_CTX* ctx, uint8_t* message, size_t len);
+extern	int		sm2_sig_init	(SM3_CTX* ctx, const SM2_PUB_KEY* key, const uint8_t* id, int len);
+extern	int		sm2_sig_update	(SM3_CTX* ctx, const uint8_t* message, size_t len);
 extern	void	sm2_sig_final	(SM3_CTX* ctx, uint8_t hash[32]);
 
-extern	void	sm2_sig_generate(SM2_SIGNATURE* sig, SM2_PRI_KEY_EXT* key, uint8_t hash[32]);
-extern	int		sm2_sig_verify	(SM2_SIGNATURE* sig, SM2_PUB_KEY* key, uint8_t hash[32]);
+extern	void	sm2_sig_generate(SM2_SIGNATURE* sig, const SM2_PRI_KEY_EXT* key, const uint8_t hash[32]);
+extern	int		sm2_sig_verify	(const SM2_SIGNATURE* sig, const SM2_PUB_KEY* key, const uint8_t hash[32]);
 
-extern	void	sm2_sig_to_bin	(SM2_SIGNATURE* sig,uint8_t out[64]);
-extern	void	sm2_sig_from_bin(SM2_SIGNATURE* sig,uint8_t in[64]);
+extern	void	sm2_sig_to_bin	(const SM2_SIGNATURE* sig, uint8_t out[64]);
+extern	void	sm2_sig_from_bin(SM2_SIGNATURE* sig, const uint8_t in[64]);
 
 __CPP_END
 

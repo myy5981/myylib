@@ -363,24 +363,24 @@ void sm2_point_mul_mont(SM2_JPOINT* r, const SM2_POINT* a, const BN_256 k){
 	}
 }
 
-void sm2_jpoint_to_mont(SM2_JPOINT* r,SM2_JPOINT* a){
+void sm2_jpoint_to_mont(SM2_JPOINT* r, const SM2_JPOINT* a){
 	bn_256_GFp_to_mont(r->x,a->x);
 	bn_256_GFp_to_mont(r->y,a->y);
 	bn_256_GFp_to_mont(r->z,a->z);
 }
 
-void sm2_jpoint_from_mont(SM2_JPOINT* r,SM2_JPOINT* a){
+void sm2_jpoint_from_mont(SM2_JPOINT* r, const SM2_JPOINT* a){
 	bn_256_mont_to_GFp(r->x,a->x);
 	bn_256_mont_to_GFp(r->y,a->y);
 	bn_256_mont_to_GFp(r->z,a->z);
 }
 
-void sm2_point_to_mont(SM2_POINT* r,SM2_POINT* a){
+void sm2_point_to_mont(SM2_POINT* r, const SM2_POINT* a){
 	bn_256_GFp_to_mont(r->x,a->x);
 	bn_256_GFp_to_mont(r->y,a->y);
 }
 
-void sm2_point_from_mont(SM2_POINT* r,SM2_POINT* a){
+void sm2_point_from_mont(SM2_POINT* r, const SM2_POINT* a){
 	bn_256_mont_to_GFp(r->x,a->x);
 	bn_256_mont_to_GFp(r->y,a->y);
 }
@@ -445,9 +445,9 @@ int sm2_point_to_bin_mont(SM2_POINT* r, uint8_t* dst, int flag){
 	return sm2_point_to_bin(&T,dst,flag);
 }
 
-int sm2_point_from_bin(SM2_POINT* r, uint8_t* dst){
+int sm2_point_from_bin(SM2_POINT* r, const uint8_t* dst){
 	SM2_POINT t;
-	BN_256_GFp t1,t2;
+	BN_256_GFp t1;
 
 	if(dst[0]==0x04){//未压缩
 		bn_256_from_bin(t.x,dst+1);
@@ -515,7 +515,7 @@ int sm2_point_from_bin(SM2_POINT* r, uint8_t* dst){
 	return 1;
 }
 
-int sm2_point_from_bin_mont(SM2_POINT* r, uint8_t* dst){
+int sm2_point_from_bin_mont(SM2_POINT* r, const uint8_t* dst){
 	SM2_POINT R;
 	if(!sm2_point_from_bin(&R,dst)){
 		sm2_point_to_mont(r,&R);

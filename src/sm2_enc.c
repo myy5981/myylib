@@ -3,7 +3,7 @@
 #include <myy/random.h>
 #include <string.h>
 
-int sm2_encrypt(SM2_PUB_KEY* key,uint8_t* m,int len,uint8_t* c){
+int sm2_encrypt(SM2_PUB_KEY* key, const uint8_t* m, int len, uint8_t* c){
 	BN_256 k;//=BN_256_INIT(59276E27,D506861A,16680F3A,D9C02DCC,EF3CC1FA,3CDBE4CE,6D54B80D,EAC1BC21);
 	do{
 		rand_bytes((uint8_t*)k,32);
@@ -52,7 +52,7 @@ int sm2_encrypt(SM2_PUB_KEY* key,uint8_t* m,int len,uint8_t* c){
 	return len+r+32;
 }
 
-int sm2_decrypt(SM2_PRI_KEY* key,uint8_t* c,int len,uint8_t* m){
+int sm2_decrypt(SM2_PRI_KEY* key, const uint8_t* c, int len, uint8_t* m){
 	SM2_POINT _kp,*kp=&_kp;
 	SM2_JPOINT _t,*t=&_t;
 	SM3_CTX _hctx,*hctx=&_hctx;
@@ -73,7 +73,7 @@ int sm2_decrypt(SM2_PRI_KEY* key,uint8_t* c,int len,uint8_t* m){
 	sm3_kdf_init_update(kctx,buf,64);
 	sm3_update(hctx,buf,32);
 
-	uint8_t* dst=c+r+32;
+	uint8_t* dst=(uint8_t*)c+r+32;
 	len=len-r-32;
 	if(len<=0){
 		return len;

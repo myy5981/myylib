@@ -151,7 +151,7 @@ void bn_256_set_word(BN_256 bn, uint32_t w){
 	bn[6] = 0; bn[7] = w;
 }
 
-void bn_256_to_bin(BN_256 bn, uint8_t* dest){
+void bn_256_to_bin(const BN_256 bn, uint8_t* dest){
 	((uint32_t*)dest)[0]=h2be_32(bn[0]);
 	((uint32_t*)dest)[1]=h2be_32(bn[1]);
 	((uint32_t*)dest)[2]=h2be_32(bn[2]);
@@ -162,7 +162,7 @@ void bn_256_to_bin(BN_256 bn, uint8_t* dest){
 	((uint32_t*)dest)[7]=h2be_32(bn[7]);
 }
 
-void bn_256_from_bin(BN_256 bn, uint8_t* src){
+void bn_256_from_bin(BN_256 bn, const uint8_t* src){
 	bn[0]=be2h_32(((uint32_t*)src)[0]);
 	bn[1]=be2h_32(((uint32_t*)src)[1]);
 	bn[2]=be2h_32(((uint32_t*)src)[2]);

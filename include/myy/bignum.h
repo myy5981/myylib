@@ -68,8 +68,8 @@ extern	void	bn_256_cpy		(BN_256 r, const BN_256 a);
  * 以下是256位整数的数据类型转换函数
 */
 
-extern	void	bn_256_to_bin	(BN_256 bn, uint8_t* dest);
-extern	void	bn_256_from_bin	(BN_256 bn, uint8_t* src);
+extern	void	bn_256_to_bin	(const BN_256 bn, uint8_t* dest);
+extern	void	bn_256_from_bin	(BN_256 bn, const uint8_t* src);
 
 #ifdef __MYY_PRIVATE_API__
 /**

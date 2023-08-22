@@ -144,12 +144,12 @@ static int memcpy_with_endian(uint32_t* dest,int num,uint8_t** src,size_t* len){
 	return 0;
 }
 
-int sm3_update(SM3_CTX* ctx,uint8_t* data,size_t len){
+int sm3_update(SM3_CTX* ctx, const uint8_t* data,size_t len){
 	if(ctx->len+len>=SM3_MAX_LEN){
 		return -1;
 	}
 	ctx->len=ctx->len+len;
-	while((ctx->num=memcpy_with_endian(ctx->W,ctx->num,&data,&len))==0){
+	while((ctx->num=memcpy_with_endian(ctx->W,ctx->num,(uint8_t**)&data,&len))==0){
 		sm3_update_block(ctx);
 		if(len==0){
 			break;

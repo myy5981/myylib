@@ -56,8 +56,8 @@ extern	void	bn_256_imul		(BN_256 r, const BN_256 a, const BN_256 b);
 extern	int		bn_256_cmp		(const BN_256 a, const BN_256 b);
 extern	void	bn_256_set_zero	(BN_256 bn);
 extern	void	bn_256_set_word	(BN_256 bn, uint32_t w);
-extern	void	bn_256_to_bin	(BN_256 bn, uint8_t* dest);
-extern	void	bn_256_from_bin	(BN_256 bn, uint8_t* src);
+extern	void	bn_256_to_bin	(const BN_256 bn, uint8_t* dest);
+extern	void	bn_256_from_bin	(BN_256 bn, const uint8_t* src);
 extern	void	bn_256_cpy		(BN_256 r, const BN_256 a);
 
 #ifdef __MYY_PRIVATE_API__

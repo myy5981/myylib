@@ -258,7 +258,7 @@ int bn_256_GFp_sqrt(BN_256_GFp r, const BN_256_GFp a){
 	BN_256 t;
 	bn_256_GFp_sqr(t,R);
 	if(bn_256_GFp_cmp(t,a)==0){
-		bn_256_cpy(r,&R);
+		bn_256_cpy(r,R);
 		return 0;
 	}
 	return 1;
@@ -498,7 +498,7 @@ int bn_256_GFp_sqrt_mont(BN_256_GFp_Mont r, const BN_256_GFp_Mont a){
 
 	__mont_sqr(a1,R);
 	if(bn_256_GFp_eql_mont(a1,a)){
-		bn_256_cpy(r,&R);
+		bn_256_cpy(r,R);
 		return 0;
 	}
 	return 1;

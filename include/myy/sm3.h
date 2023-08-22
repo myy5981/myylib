@@ -23,7 +23,7 @@ typedef	struct _SM3_CTX	SM3_CTX;
 
 extern	void	sm3_init		(SM3_CTX* ctx);
 /*SM3对数据量有限制（小于2^64bit，也就是2^61字节），如果数据量过大则返回-1，否则只会返回0*/
-extern	int		sm3_update		(SM3_CTX* ctx, uint8_t* data, size_t len);
+extern	int		sm3_update		(SM3_CTX* ctx, const uint8_t* data, size_t len);
 extern	void	sm3_final		(SM3_CTX* ctx, void* dest);
 extern	int		sm3_hash		(void* message, size_t len, void* dest);
 extern	void	sm3_ctx_clone	(SM3_CTX* src, SM3_CTX* dest);
