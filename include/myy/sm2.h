@@ -99,6 +99,7 @@ extern	int		sm2_decrypt	(SM2_PRI_KEY* key, const uint8_t* c, int len, uint8_t* m
 
 /**
  * 根据用户的公钥和标识生成用户标识
+ * id可以为NULL，若如此，id默认为"1234567812345678"，长度16字节，参数len被忽略
  * 该实现位于sm2_sig.c中
 */
 extern	int		sm2_id_generate	(uint8_t hash[32], const SM2_PUB_KEY* key, const uint8_t* id, int len);
@@ -118,6 +119,9 @@ typedef struct _SM2_SIGNATURE{
  * 在调用签名/验签API时，直接传入杂凑值即可
 */
 
+/**
+ * id可以为NULL，若如此，id默认为"1234567812345678"，长度16字节，参数len被忽略
+*/
 extern	int		sm2_sig_init	(SM3_CTX* ctx, const SM2_PUB_KEY* key, const uint8_t* id, int len);
 extern	int		sm2_sig_update	(SM3_CTX* ctx, const uint8_t* message, size_t len);
 extern	void	sm2_sig_final	(SM3_CTX* ctx, uint8_t hash[32]);
