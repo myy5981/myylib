@@ -13,7 +13,7 @@ struct _SM3_KDF_CTX {
 typedef	struct _SM3_KDF_CTX	SM3_KDF_CTX;
 
 extern	void	sm3_kdf_init		(SM3_KDF_CTX* ctx);
-extern	int		sm3_kdf_init_update	(SM3_KDF_CTX* ctx, uint8_t* data, size_t len);
+extern	int		sm3_kdf_init_update	(SM3_KDF_CTX* ctx, const uint8_t* data, size_t len);
 
 /**
  * 当计数器超过最大值（含最大值，即：ct>=0X7FFFFFFF）时，或

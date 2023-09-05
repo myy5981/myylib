@@ -15,10 +15,14 @@ const SM2_POINT SM2_G_MONT={
 
 static const BN_256 SM2_N_SUB_1	=	BN_256_INIT(FFFFFFFE,FFFFFFFF,FFFFFFFF,FFFFFFFF,7203DF6B,21C6052B,53BBF409,39D54122);
 
-void sm2_key_generate(SM2_PRI_KEY* prik){
-	do{
-		rand_bytes((uint8_t*)(prik->d),32);
-	}while(bn_256_cmp(prik->d,SM2_N_SUB_1)>=0||bn_256_is_zero(prik->d));
+void sm2_key_generate(SM2_PRI_KEY* prik, const BN_256 d){
+	if(d==NULL||bn_256_cmp(d,SM2_N_SUB_1)>=0||bn_256_is_zero(d)){
+		do{
+			rand_bytes((uint8_t*)(prik->d),32);
+		}while(bn_256_cmp(prik->d,SM2_N_SUB_1)>=0||bn_256_is_zero(prik->d));
+	}else{
+		bn_256_cpy(prik->d,d);
+	}
 	SM2_JPOINT pub;
 	sm2_point_mul_mont(&pub,&SM2_G_MONT,prik->d);
 	sm2_jpoint_to_point_mont(&(prik->Pub),&pub);
@@ -34,9 +38,9 @@ void sm2_key_extend (SM2_PRI_KEY_EXT* kext, const SM2_PRI_KEY* prik){
 	bn_256_GFn_inv(kext->d1_inv,kext->d1_inv);
 }
 
-void sm2_pub_key_generate(SM2_PUB_KEY* pubk, const SM2_PRI_KEY* prik){
-	bn_256_GFp_cpy_mont(pubk->x,prik->Pub.x);
-	bn_256_GFp_cpy_mont(pubk->y,prik->Pub.y);
+void sm2_pub_generate(SM2_PUB_KEY* pubk, const SM2_PRI_KEY* prik){
+	bn_256_GFp_cpy(pubk->x,prik->Pub.x);
+	bn_256_GFp_cpy(pubk->y,prik->Pub.y);
 }
 
 int sm2_pub_key_verify(const SM2_PUB_KEY* pubk){

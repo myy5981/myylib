@@ -129,4 +129,5 @@ void hex_enc2stream(FILE* fp,void* src,size_t len){
 		buf[k*2+1]=lower[e&0X0F];
 	}
 	fwrite(buf,1,j*2,fp);
+	fwrite("\n",1,1,fp);
 }

@@ -3,11 +3,11 @@
 /**
  * 先随便实现一个，这并不安全
 */
+#include <sys/random.h>
 #include <stdlib.h>
 #include <time.h>
 void rand_bytes(uint8_t* r, size_t size){
-	srand((unsigned int)time(NULL));
-	for (size_t i = 0; i < size; i++){
-		r[i]=(uint8_t)rand();
+	if(getrandom(r,size,GRND_NONBLOCK)<0){
+		exit(0);
 	}
 }

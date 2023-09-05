@@ -21,7 +21,8 @@ OBJ = obj/endian.o\
 		obj/sm2_point.o\
 		obj/sm2_key.o\
 		obj/sm2_enc.o\
-		obj/sm2_sig.o
+		obj/sm2_sig.o\
+		obj/sm2_ecdhe.o
 
 .PHONY: debug
 debug: CLEVEL = -g -fdiagnostics-color=always
