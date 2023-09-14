@@ -85,7 +85,7 @@ extern	void	sm2_sig_from_bin(SM2_SIGNATURE* sig, const uint8_t in[64]);
  * SM2 密钥交换
 */
 
-extern	int		sm2_ecdhe_init	(SM3_KDF_CTX* kdf,
+extern	int		sm2_ecmqv_init	(SM3_KDF_CTX* kdf,
 									const SM2_PRI_KEY* k, const SM2_PRI_KEY* rk,
 									const SM2_PUB_KEY* opposite_k, const SM2_PUB_KEY* opposite_rk,
 									const uint8_t Z_cli[32], const uint8_t Z_srv[32]);
