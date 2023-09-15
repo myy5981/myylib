@@ -2,6 +2,7 @@
 #define MYY_SM4_H
 
 #include <myy/env.h>
+#include <myy/ghash.h>
 
 __CPP_BEGIN
 
@@ -12,20 +13,51 @@ __CPP_BEGIN
  */
 typedef uint32_t	SM4_KEY[32];
 
-extern	void	sm4_key_init		(SM4_KEY key, uint8_t origin[16]);
-extern	void	sm4_encrypt_block	(SM4_KEY key, uint8_t message[16], uint8_t cipher[16]);
-extern	void	sm4_decrypt_block	(SM4_KEY key, uint8_t cipher[16], uint8_t message[16]);
+extern	void	sm4_key_init		(SM4_KEY key, const uint8_t origin[16]);
+extern	void	sm4_encrypt_block	(SM4_KEY key, const uint8_t message[16], uint8_t cipher[16]);
+extern	void	sm4_decrypt_block	(SM4_KEY key, const uint8_t cipher[16], uint8_t message[16]);
 
 #define	sm4_ecb_init	sm4_key_init
 #define	sm4_ecb_encrypt	sm4_encrypt_block
 #define	sm4_ecb_decrypt	sm4_decrypt_block
 
-extern	void	sm4_encrypt_block_with_xor	(SM4_KEY key, uint8_t message[16], uint8_t perfix[16], uint8_t cipher[16]);
-extern	void	sm4_decrypt_block_with_xor	(SM4_KEY key, uint8_t cipher[16], uint8_t perfix[16], uint8_t message[16]);
+extern	void	sm4_encrypt_block_with_xor	(SM4_KEY key, const uint8_t message[16], const uint8_t perfix[16], uint8_t cipher[16]);
+extern	void	sm4_decrypt_block_with_xor	(SM4_KEY key, const uint8_t cipher[16], const uint8_t perfix[16], uint8_t message[16]);
 
 #define	sm4_cbc_init	sm4_key_init
 #define	sm4_cbc_encrypt	sm4_encrypt_block_with_xor
 #define	sm4_cbc_decrypt	sm4_decrypt_block_with_xor
+
+typedef struct _SM4_GCM_CTX{
+	SM4_KEY key;
+	GHASH_CTX ctx4ghash;
+	uint8_t cb[16];
+	uint8_t block[16];
+	size_t aad_size;
+	int block_l;
+}SM4_GCM_CTX;
+
+/**
+ * key：SM4密钥
+ * IV：初始向量，固定为96bit（12字节）
+ * aad：附加鉴别数据，其长度（字节）由aad_len指定。其可以为NULL，若为NULL则aad_len参数被忽略。
+ * 错误（当且仅当aad_len过长，即add_len*8>2^64-1）时返回-1，成功返回0
+*/
+extern	int		sm4_gcm_init		(SM4_GCM_CTX* ctx, const uint8_t key[16], const uint8_t IV[12], const uint8_t* aad, const size_t aad_len);
+
+/**
+ * 该函数返回本次向c中写入的密文字节数，该数一定为16的整数倍，并不总等于len的值
+ * （这是由于m中不足一个分组的数据会被保存在ctx中而不会马上执行加密，因此当len过小时返回值也可能是0）
+ * 错误（当且仅当总的加密数据过长）时返回-1
+*/
+extern	int		sm4_gcm_enc_update	(SM4_GCM_CTX* ctx, uint8_t* c, const uint8_t* m, size_t len);
+
+/**
+ * 向c中写入最后一个分组的密文（如果存在），并向ghash中写入t字节的本次加密的校验值，t不大于16
+ * 当且仅当总的加密数据过长，或t不属于区间[1,16]时错误并返回-1
+ * 否则返回本次向c中写入的字节数（如果不存在最后一个分组，返回0）
+*/
+extern	int		sm4_gcm_enc_final	(SM4_GCM_CTX* ctx, uint8_t* c, uint8_t* ghash, int t);
 
 __CPP_END
 

@@ -84,7 +84,7 @@ static const uint8_t Sbox[256]={
 		x0^=t; \
 		key[xx]=x0
 
-void sm4_key_init(SM4_KEY key, uint8_t origin[16]){
+void sm4_key_init(SM4_KEY key, const uint8_t origin[16]){
 	uint32_t* o=(uint32_t*)origin;
 	uint32_t k0=be2h_32(o[0])^FK_0;
 	uint32_t k1=be2h_32(o[1])^FK_1;
@@ -101,7 +101,7 @@ void sm4_key_init(SM4_KEY key, uint8_t origin[16]){
 	EXT(k0,k1,k2,k3,28); EXT(k1,k2,k3,k0,29); EXT(k2,k3,k0,k1,30); EXT(k3,k0,k1,k2,31);
 }
 
-void sm4_encrypt_block(SM4_KEY key,uint8_t message[16],uint8_t cipher[16]){
+void sm4_encrypt_block(SM4_KEY key,const uint8_t message[16],uint8_t cipher[16]){
 	uint32_t* _m=(uint32_t*)message;
 	uint32_t* _c=(uint32_t*)cipher;
 	uint32_t x0=be2h_32(_m[0]);
@@ -123,7 +123,7 @@ void sm4_encrypt_block(SM4_KEY key,uint8_t message[16],uint8_t cipher[16]){
 	_c[3]=h2be_32(x0);
 }
 
-void sm4_encrypt_block_with_xor(SM4_KEY key,uint8_t message[16],uint8_t perfix[16],uint8_t cipher[16]){
+void sm4_encrypt_block_with_xor(SM4_KEY key,const uint8_t message[16],const uint8_t perfix[16],uint8_t cipher[16]){
 	uint32_t* _m=(uint32_t*)message;
 	uint32_t* _m_=(uint32_t*)perfix;
 	uint32_t* _c=(uint32_t*)cipher;
@@ -146,7 +146,7 @@ void sm4_encrypt_block_with_xor(SM4_KEY key,uint8_t message[16],uint8_t perfix[1
 	_c[3]=h2be_32(x0);
 }
 
-void sm4_decrypt_block(SM4_KEY key,uint8_t cipher[16],uint8_t message[16]){
+void sm4_decrypt_block(SM4_KEY key,const uint8_t cipher[16],uint8_t message[16]){
 	uint32_t* _c=(uint32_t*)cipher;
 	uint32_t* _m=(uint32_t*)message;
 	uint32_t x0=be2h_32(_c[0]);
@@ -168,7 +168,7 @@ void sm4_decrypt_block(SM4_KEY key,uint8_t cipher[16],uint8_t message[16]){
 	_m[3]=h2be_32(x0);
 }
 
-void sm4_decrypt_block_with_xor(SM4_KEY key,uint8_t cipher[16],uint8_t perfix[16],uint8_t message[16]){
+void sm4_decrypt_block_with_xor(SM4_KEY key,const uint8_t cipher[16],const uint8_t perfix[16],uint8_t message[16]){
 	uint32_t* _c=(uint32_t*)cipher;
 	uint32_t* _c_=(uint32_t*)perfix;
 	uint32_t* _m=(uint32_t*)message;

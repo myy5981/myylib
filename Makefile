@@ -12,6 +12,8 @@ OBJ = obj/endian.o\
 		obj/sm3_kdf.o\
 		obj/sm3.o\
 		obj/sm4.o\
+		obj/ghash.o\
+		obj/sm4_gcm.o\
 		obj/url_base64.o\
 		obj/algorithm.o\
 		obj/random.o\
