@@ -25,34 +25,29 @@ int sm4_gcm_init(SM4_GCM_CTX* ctx,
 			uint8_t buf[16];
 			memcpy(buf,aad,r);
 			memset(buf+r,0,16-r);
+			ghash_update(&(ctx->ctx4ghash),buf);
 		}
 		ctx->aad_size=aad_len*8;
 	}
-	memcpy(ctx->cb,IV,12);
-	ctx->cb[15]=1;
-	ctx->cb[14]=0;
-	ctx->cb[13]=0;
-	ctx->cb[12]=0;
+	memcpy(ctx->icb,IV,12);
 	ctx->block_l=0;
+	ctx->ct=1;
 	return 0;
 }
 
 static int sm4_gcm_enc_update_block(SM4_GCM_CTX* ctx,const uint8_t m[16],uint8_t c[16]){
-	uint32_t ct=*(uint32_t*)(ctx->cb+12);
-	ct=be2h_32(ct);
-	if(ct>=UINT32_MAX){
+	if(ctx->ct==UINT32_MAX){
 		return 1;
 	}
+	ctx->ct++;
 	
 	uint8_t s[16];
-	sm4_encrypt_block(ctx->key,ctx->cb,s);
+	*(uint32_t*)(ctx->icb+12)=h2be_32(ctx->ct);
+	sm4_encrypt_block(ctx->key,ctx->icb,s);
 	((uint64_t*)c)[0]=((uint64_t*)m)[0]^((uint64_t*)s)[0];
 	((uint64_t*)c)[1]=((uint64_t*)m)[1]^((uint64_t*)s)[1];
 	ghash_update(&ctx->ctx4ghash,c);
 
-	ct++;
-	ct=h2be_32(ct);
-	*(uint32_t*)(ctx->cb+12)=ct;
 	return 0;
 }
 
@@ -93,38 +88,37 @@ int sm4_gcm_enc_final(SM4_GCM_CTX* ctx, uint8_t* c, uint8_t* gmac, int t){
 	if(t<1||t>16){
 		return -1;
 	}
-	int r=0;
-	uint32_t ct=*(uint32_t*)(ctx->cb+12);
-	ct=be2h_32(ct);
 	uint8_t T[16];
+	size_t c_size=(size_t)(ctx->ct-1)*128ULL;
 	if(ctx->block_l!=0){
-		if(ct>=UINT32_MAX){
+		if(ctx->ct==UINT32_MAX){
 			return 1;
 		}
-		r=ctx->block_l;
-		sm4_encrypt_block(ctx->key,ctx->cb,T);
+		ctx->ct++;
+		*(uint32_t*)(ctx->icb+12)=h2be_32(ctx->ct);
+		c_size+=(ctx->block_l*8);
+		sm4_encrypt_block(ctx->key,ctx->icb,T);
 		((uint64_t*)T)[0]=((uint64_t*)T)[0]^((uint64_t*)(ctx->block))[0];
 		((uint64_t*)T)[1]=((uint64_t*)T)[1]^((uint64_t*)(ctx->block))[1];
-		memset(T+r,0,16-r);
+		memset(T+ctx->block_l,0,16-ctx->block_l);
 		ghash_update(&ctx->ctx4ghash,T);
-		memcpy(c,T,r);
-	}else{
-		ct--;
+		memcpy(c,T,ctx->block_l);
 	}
+
 	((uint64_t*)T)[0]=h2be_64(ctx->aad_size);
-	size_t c_size=(size_t)ct*128ULL;
 	((uint64_t*)T)[1]=h2be_64(c_size);
+
 	ghash_update(&ctx->ctx4ghash,T);
 	ghash_final(&ctx->ctx4ghash,T);
 
-	ctx->cb[15]=1;
-	ctx->cb[14]=0;
-	ctx->cb[13]=0;
-	ctx->cb[12]=0;
+	ctx->icb[15]=1;
+	ctx->icb[14]=0;
+	ctx->icb[13]=0;
+	ctx->icb[12]=0;
 	uint8_t s[16];
-	sm4_encrypt_block(ctx->key,ctx->cb,s);
+	sm4_encrypt_block(ctx->key,ctx->icb,s);
 	((uint64_t*)T)[0]=((uint64_t*)T)[0]^((uint64_t*)s)[0];
 	((uint64_t*)T)[1]=((uint64_t*)T)[1]^((uint64_t*)s)[1];
 	memcpy(gmac,T,t);
-	return r;
+	return ctx->block_l;
 }

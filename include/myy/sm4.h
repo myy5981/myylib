@@ -31,7 +31,8 @@ extern	void	sm4_decrypt_block_with_xor	(SM4_KEY key, const uint8_t cipher[16], c
 typedef struct _SM4_GCM_CTX{
 	SM4_KEY key;
 	GHASH_CTX ctx4ghash;
-	uint8_t cb[16];
+	uint8_t icb[16];
+	uint32_t ct;
 	uint8_t block[16];
 	size_t aad_size;
 	int block_l;
@@ -57,7 +58,7 @@ extern	int		sm4_gcm_enc_update	(SM4_GCM_CTX* ctx, uint8_t* c, const uint8_t* m, 
  * 当且仅当总的加密数据过长，或t不属于区间[1,16]时错误并返回-1
  * 否则返回本次向c中写入的字节数（如果不存在最后一个分组，返回0）
 */
-extern	int		sm4_gcm_enc_final	(SM4_GCM_CTX* ctx, uint8_t* c, uint8_t* ghash, int t);
+extern	int		sm4_gcm_enc_final	(SM4_GCM_CTX* ctx, uint8_t* c, uint8_t* gmac, int t);
 
 __CPP_END
 

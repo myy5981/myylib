@@ -1,6 +1,7 @@
 #include <myy/bignum.h>
 #include <myy/sm2.h>
 #include <myy/hex.h>
+#include <myy/sm4.h>
 #include "task.h"
 #include <stdio.h>
 #include <string.h>
@@ -41,8 +42,8 @@ int before(){
 }
 
 void fun(){
-	res1 = sm2_ecdhe_init(&ka,A,rA,&(B->Pub),&(rB->Pub),Za,Zb);
-	res2 = sm2_ecdhe_init(&kb,B,rB,&(A->Pub),&(rA->Pub),Za,Zb);
+	res1 = sm2_ecmqv_init(&ka,A,rA,&(B->Pub),&(rB->Pub),Za,Zb);
+	res2 = sm2_ecmqv_init(&kb,B,rB,&(A->Pub),&(rA->Pub),Za,Zb);
 }
 
 void after(){
@@ -55,7 +56,33 @@ void after(){
 	hex_enc2stream(stdout,buf,16);
 }
 
+void test_sm4_gcm(){
+	SM4_GCM_CTX ctx;
+	uint8_t key[16]={0};
+	uint8_t IV[12]={0};
+	uint8_t hash[16];
+	uint8_t c[16]={0};
+	uint8_t m[16]={0};
+	sm4_gcm_init(&ctx,key,IV,NULL,0);
+	//sm4_gcm_enc_update(&ctx,c,m,16);
+	sm4_gcm_enc_final(&ctx,c,hash,16);
+
+	printf("C_1: ");
+	hex_enc2stream(stdout,c,16);
+	printf("T_1: ");
+	hex_enc2stream(stdout,hash,16);
+
+	sm4_gcm_init(&ctx,key,IV,NULL,0);
+	sm4_gcm_enc_update(&ctx,c,m,16);
+	sm4_gcm_enc_final(&ctx,c,hash,16);
+
+	printf("C_2: ");
+	hex_enc2stream(stdout,c,16);
+	printf("T_2: ");
+	hex_enc2stream(stdout,hash,16);
+}
+
 const Task tasks[]={
-	{.after=after,.before=before,.task=fun}
+	{.after=NULL,.before=NULL,.task=test_sm4_gcm}
 };
 int tasks_len=1;

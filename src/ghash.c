@@ -13,9 +13,9 @@ void bn_128_gf_add(BN_128 r, const BN_128 a, const BN_128 b){
 
 void bn_128_gf_mul(BN_128 r, const BN_128 a, const BN_128 b){
 	BN_128 v,R={0,0};
-	v[0]=b[0];v[1]=b[1];
-	for(int i=0;i<64;++i){
-		if((a[1]>>i)&0x01ULL){
+	v[0]=a[0];v[1]=a[1];
+	for(int i=63;i>=0;--i){
+		if((b[0]>>i)&0x01ULL){
 			bn_128_gf_add(R,R,v);
 		}
 		if(v[1]&0x01ULL){
@@ -25,8 +25,8 @@ void bn_128_gf_mul(BN_128 r, const BN_128 a, const BN_128 b){
 			bn_128_gf_rshift1(v,v);
 		}
 	}
-	for(int i=0;i<64;++i){
-		if((a[0]>>i)&0x01ULL){
+	for(int i=63;i>=0;--i){
+		if((b[1]>>i)&0x01ULL){
 			bn_128_gf_add(R,R,v);
 		}
 		if(v[1]&0x01ULL){

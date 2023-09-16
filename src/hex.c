@@ -116,8 +116,8 @@ void hex_enc2stream(FILE* fp,void* src,size_t len){
 	for(i=0;i<len/512;++i){
 		for(j=0;j<512;++j){
 			e=s[j];
-			buf[j*2]=lower[(e>>4)&0X0F];
-			buf[j*2+1]=lower[e&0X0F];
+			buf[j*2]=upper[(e>>4)&0X0F];
+			buf[j*2+1]=upper[e&0X0F];
 		}
 		s+=512;
 		fwrite(buf,1,1024,fp);
@@ -125,8 +125,8 @@ void hex_enc2stream(FILE* fp,void* src,size_t len){
 	j=len-i*512;
 	for(k=0;k<j;++k){
 		e=s[k];
-		buf[k*2]=lower[(e>>4)&0X0F];
-		buf[k*2+1]=lower[e&0X0F];
+		buf[k*2]=upper[(e>>4)&0X0F];
+		buf[k*2+1]=upper[e&0X0F];
 	}
 	fwrite(buf,1,j*2,fp);
 	fwrite("\n",1,1,fp);
