@@ -2,6 +2,7 @@
 #include <myy/sm2.h>
 #include <myy/hex.h>
 #include <myy/sm4.h>
+#include <myy/random.h>
 #include "task.h"
 #include <stdio.h>
 #include <string.h>
@@ -64,7 +65,6 @@ void test_sm4_gcm(){
 	uint8_t c[16]={0};
 	uint8_t m[16]={0};
 	sm4_gcm_init(&ctx,key,IV,NULL,0);
-	//sm4_gcm_enc_update(&ctx,c,m,16);
 	sm4_gcm_enc_final(&ctx,c,hash,16);
 
 	printf("C_1: ");
@@ -82,7 +82,48 @@ void test_sm4_gcm(){
 	hex_enc2stream(stdout,hash,16);
 }
 
+void test_sm4_gcm_dec(){
+	#define MESSAGE_LEN 64
+	SM4_GCM_CTX ctx;
+	uint8_t key[16]={0};
+	uint8_t IV[12]={0};
+	uint8_t m[MESSAGE_LEN]={0};
+	uint8_t c[MESSAGE_LEN]={0};
+	uint8_t d[MESSAGE_LEN]={0};
+	uint8_t gmac[16];
+
+	rand_bytes(key,16);
+	rand_bytes(IV,12);
+	rand_bytes(m,MESSAGE_LEN);
+
+	sm4_gcm_init(&ctx,key,IV,(const uint8_t*)"myy5981@outlook.com",19);
+	int r=sm4_gcm_enc_update(&ctx,c,m,MESSAGE_LEN);
+	sm4_gcm_enc_final(&ctx,c+r,gmac,16);
+
+	printf("key: ");
+	hex_enc2stream(stdout,key,16);
+	printf(" IV: ");
+	hex_enc2stream(stdout,IV,12);
+	printf("  m: ");
+	hex_enc2stream(stdout,m,MESSAGE_LEN);
+	printf("  c: ");
+	hex_enc2stream(stdout,c,MESSAGE_LEN);
+	printf("mac: ");
+	hex_enc2stream(stdout,gmac,16);
+
+	sm4_gcm_reset(&ctx,IV,(const uint8_t*)"myy5981@outlook.com",19);
+	r = sm4_gcm_decrypt(&ctx,d,c,MESSAGE_LEN,gmac,16);
+
+	printf(" %1dd: ",r);
+	hex_enc2stream(stdout,d,MESSAGE_LEN);
+
+	printf("res: %d\n",memcmp(m,d,MESSAGE_LEN));
+
+	#undef MESSAGE_LEN
+}
+
 const Task tasks[]={
-	{.after=NULL,.before=NULL,.task=test_sm4_gcm}
+	{.after=after,.before=before,.task=fun},
+	{.after=NULL,.before=NULL,.task=test_sm4_gcm_dec}
 };
-int tasks_len=1;
+int tasks_len=2;

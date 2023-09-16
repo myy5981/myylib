@@ -20,12 +20,13 @@ int main(void){
 		if(task->task!=NULL){
 			gettimeofday(&begin,NULL);
 			task->task();
-			gettimeofday(&end,NULL);
-			printf("task%d cost:%ldus\n",i,(end.tv_sec-begin.tv_sec)*1000000+end.tv_usec-begin.tv_usec);
+			gettimeofday(&end,NULL);		
 		}
 		if(task->after!=NULL){
 			task->after();
 		}
+		printf("task%d cost:%ldus\n============================\n",i,(end.tv_sec-begin.tv_sec)*1000000+end.tv_usec-begin.tv_usec);
+
 	}
 	return 0;
 }
