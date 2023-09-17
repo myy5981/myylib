@@ -1,7 +1,8 @@
 {
     "files.associations": {
-        "*.c": "c",
-        "*.cpp": "cpp",
-        "*.h": "c",
-    }
+		"*.c": "c",
+		"*.cpp": "cpp",
+		"*.h": "c",
+		"typeinfo": "c"
+	}
 }

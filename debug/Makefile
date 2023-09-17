@@ -13,4 +13,4 @@ build:
 	make debug -C ../
 
 debug: debug.c libtask.so
-	gcc -L./ $^ -o $@ -ltask
+	gcc -g -L./ $^ -o $@ -ltask

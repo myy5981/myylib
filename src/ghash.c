@@ -48,7 +48,6 @@ void bn_128_to_bin(const BN_128 r, uint8_t dst[16]){
 void bn_128_from_bin(BN_128 r, const uint8_t src[16]){
 	r[0]=be2h_64(((uint64_t*)src)[0]);
 	r[1]=be2h_64(((uint64_t*)src)[1]);
-
 }
 
 void ghash_init(GHASH_CTX* ctx, const uint8_t key[16]){

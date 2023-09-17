@@ -30,7 +30,7 @@ c558b44bee5301d9f52b44d939bb59584d75b9034dd6a9fc826872109a65739f
 79c988d63229d97ef19fe02ca1056e01e6a7411ed24694aa8f834f4a4ab022f7
 */
 
-int before(){
+int test_sm2_ecmqv_before(){
 	sm2_key_generate(A,da);
 	sm2_key_generate(B,db);
 	sm2_key_generate(rA,ra);
@@ -42,12 +42,12 @@ int before(){
 	return 1;
 }
 
-void fun(){
+void test_sm2_ecmqv(){
 	res1 = sm2_ecmqv_init(&ka,A,rA,&(B->Pub),&(rB->Pub),Za,Zb);
 	res2 = sm2_ecmqv_init(&kb,B,rB,&(A->Pub),&(rA->Pub),Za,Zb);
 }
 
-void after(){
+void test_sm2_ecmqv_after(){
 	printf("%d,%d\n",res1,res2);
 
 	uint8_t buf[16];
@@ -65,7 +65,7 @@ void test_sm4_gcm(){
 	uint8_t c[16]={0};
 	uint8_t m[16]={0};
 	sm4_gcm_init(&ctx,key,IV,NULL,0);
-	sm4_gcm_enc_final(&ctx,c,hash,16);
+	sm4_gcm_enc_final(&ctx,hash,16);
 
 	printf("C_1: ");
 	hex_enc2stream(stdout,c,16);
@@ -74,7 +74,7 @@ void test_sm4_gcm(){
 
 	sm4_gcm_init(&ctx,key,IV,NULL,0);
 	sm4_gcm_enc_update(&ctx,c,m,16);
-	sm4_gcm_enc_final(&ctx,c,hash,16);
+	sm4_gcm_enc_final(&ctx,hash,16);
 
 	printf("C_2: ");
 	hex_enc2stream(stdout,c,16);
@@ -83,7 +83,7 @@ void test_sm4_gcm(){
 }
 
 void test_sm4_gcm_dec(){
-	#define MESSAGE_LEN 64
+	#define MESSAGE_LEN 137
 	SM4_GCM_CTX ctx;
 	uint8_t key[16]={0};
 	uint8_t IV[12]={0};
@@ -98,7 +98,7 @@ void test_sm4_gcm_dec(){
 
 	sm4_gcm_init(&ctx,key,IV,(const uint8_t*)"myy5981@outlook.com",19);
 	int r=sm4_gcm_enc_update(&ctx,c,m,MESSAGE_LEN);
-	sm4_gcm_enc_final(&ctx,c+r,gmac,16);
+	sm4_gcm_enc_final(&ctx,gmac,16);
 
 	printf("key: ");
 	hex_enc2stream(stdout,key,16);
@@ -123,7 +123,8 @@ void test_sm4_gcm_dec(){
 }
 
 const Task tasks[]={
-	{.after=after,.before=before,.task=fun},
-	{.after=NULL,.before=NULL,.task=test_sm4_gcm_dec}
+	{.task=test_sm2_ecmqv,.after=test_sm2_ecmqv_after,.before=test_sm2_ecmqv_before},
+	{.task=test_sm4_gcm,.after=NULL,.before=NULL},
+	{.task=test_sm4_gcm_dec,.after=NULL,.before=NULL}
 };
-int tasks_len=2;
+int tasks_len=12;

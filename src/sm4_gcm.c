@@ -65,82 +65,78 @@ int sm4_gcm_reset(SM4_GCM_CTX* ctx, const uint8_t IV[12],
 	return 0;
 }
 
-
-static int sm4_gcm_enc_update_block(SM4_GCM_CTX* ctx,const uint8_t m[16],uint8_t c[16]){
-	if(ctx->ct==UINT32_MAX){
-		return 1;
-	}
-	ctx->ct++;
-	
-	uint8_t s[16];
-	*(uint32_t*)(ctx->icb+12)=h2be_32(ctx->ct);
-	sm4_encrypt_block(ctx->key,ctx->icb,s);
-	((uint64_t*)c)[0]=((uint64_t*)m)[0]^((uint64_t*)s)[0];
-	((uint64_t*)c)[1]=((uint64_t*)m)[1]^((uint64_t*)s)[1];
-	ghash_update(&ctx->ctx4ghash,c);
-
-	return 0;
-}
-
 int sm4_gcm_enc_update(SM4_GCM_CTX* ctx, uint8_t* c, const uint8_t* m, size_t len){
-	int r=0;
+	if(len==0){
+		return 0;
+	}
 	if(ctx->block_l!=0){
-		if(ctx->block_l+len<16){
-			memcpy(ctx->block+ctx->block_l,m,len);
-			ctx->block_l+=len;
-			return r;
+		uint8_t* tg=ctx->block+ctx->block_l;
+		int r=16-ctx->block_l;
+		if(len<r){
+			for(size_t i=0;i<len;++i){
+				tg[i]^=m[i];
+			}
+			memcpy(c,tg,len);
+			ctx->block_l+=(int)len;
+			return 0;
 		}
-		memcpy(ctx->block+ctx->block_l,m,16-ctx->block_l);
-		if(sm4_gcm_enc_update_block(ctx,ctx->block,c)){
-			return -1;
+		for(size_t i=0;i<r;++i){
+			tg[i]^=m[i];
 		}
-		m+=(16-ctx->block_l);
-		c+=16;
-		len-=(16-ctx->block_l);
+		memcpy(c,tg,r);
+		ghash_update(&ctx->ctx4ghash,ctx->block);
+		m+=r;
+		c+=r;
+		len-=r;
 		ctx->block_l=0;
-		r+=16;
 	}
-	for(size_t i=0; i<len/16; i++){
-		if(sm4_gcm_enc_update_block(ctx,m,c)){
-			return -1;
-		}
-		m+=16;
-		c+=16;
-		r+=16;
-	}
-	if(len%16!=0){
-		ctx->block_l=len%16;
-		memcpy(ctx->block,m,ctx->block_l);
-	}
-	return r;
-}
-
-int sm4_gcm_enc_final(SM4_GCM_CTX* ctx, uint8_t* c, uint8_t* gmac, int t){
-	if(t<1||t>16){
-		return -1;
-	}
-	uint8_t T[16];
-	size_t c_size=(size_t)(ctx->ct-1)*128ULL;
-	if(ctx->block_l!=0){
+	for(size_t i=0;i<len/16;i++){
 		if(ctx->ct==UINT32_MAX){
 			return 1;
 		}
 		ctx->ct++;
 		*(uint32_t*)(ctx->icb+12)=h2be_32(ctx->ct);
-		c_size+=(ctx->block_l*8);
-		sm4_encrypt_block(ctx->key,ctx->icb,T);
-		((uint64_t*)T)[0]=((uint64_t*)T)[0]^((uint64_t*)(ctx->block))[0];
-		((uint64_t*)T)[1]=((uint64_t*)T)[1]^((uint64_t*)(ctx->block))[1];
-		memset(T+ctx->block_l,0,16-ctx->block_l);
-		ghash_update(&ctx->ctx4ghash,T);
-		memcpy(c,T,ctx->block_l);
+		sm4_encrypt_block(ctx->key,ctx->icb,ctx->block);
+		((uint64_t*)c)[0]=((uint64_t*)m)[0]^((uint64_t*)ctx->block)[0];
+		((uint64_t*)c)[1]=((uint64_t*)m)[1]^((uint64_t*)ctx->block)[1];
+		ghash_update(&ctx->ctx4ghash,c);
+
+		m+=16;
+		c+=16;
+	}
+	if(len%16!=0){
+		if(ctx->ct==UINT32_MAX){
+			return 1;
+		}
+		ctx->ct++;
+		
+		*(uint32_t*)(ctx->icb+12)=h2be_32(ctx->ct);
+		sm4_encrypt_block(ctx->key,ctx->icb,ctx->block);
+		for(int i=0;i<len%16;++i){
+			ctx->block[i]^=m[i];
+		}
+		memcpy(c,ctx->block,len%16);
+		ctx->block_l=len%16;
+	}
+	return 0;
+}
+
+int sm4_gcm_enc_final(SM4_GCM_CTX* ctx, uint8_t* gmac, int t){
+	if(t<1||t>16){
+		return -1;
+	}
+	size_t c_size=(size_t)(ctx->ct-1)*128ULL;
+	if(c_size!=0 && ctx->block_l!=0){
+		c_size=c_size-(16-ctx->block_l)*8;
+		memset(ctx->block+ctx->block_l,0,16-ctx->block_l);
+		ghash_update(&ctx->ctx4ghash,ctx->block);
 	}
 
-	((uint64_t*)T)[0]=h2be_64(ctx->aad_size);
-	((uint64_t*)T)[1]=h2be_64(c_size);
+	((uint64_t*)ctx->block)[0]=h2be_64(ctx->aad_size);
+	((uint64_t*)ctx->block)[1]=h2be_64(c_size);
 
-	ghash_update(&ctx->ctx4ghash,T);
-	ghash_final(&ctx->ctx4ghash,T);
+	ghash_update(&ctx->ctx4ghash,ctx->block);
+	ghash_final(&ctx->ctx4ghash,ctx->block);
 
 	ctx->icb[15]=1;
 	ctx->icb[14]=0;
@@ -148,10 +144,10 @@ int sm4_gcm_enc_final(SM4_GCM_CTX* ctx, uint8_t* c, uint8_t* gmac, int t){
 	ctx->icb[12]=0;
 	uint8_t s[16];
 	sm4_encrypt_block(ctx->key,ctx->icb,s);
-	((uint64_t*)T)[0]=((uint64_t*)T)[0]^((uint64_t*)s)[0];
-	((uint64_t*)T)[1]=((uint64_t*)T)[1]^((uint64_t*)s)[1];
-	memcpy(gmac,T,t);
-	return ctx->block_l;
+	((uint64_t*)ctx->block)[0]^=((uint64_t*)s)[0];
+	((uint64_t*)ctx->block)[1]^=((uint64_t*)s)[1];
+	memcpy(gmac,ctx->block,t);
+	return 0;
 }
 
 int sm4_gcm_decrypt(SM4_GCM_CTX* ctx, uint8_t* m,
