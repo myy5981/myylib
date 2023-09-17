@@ -127,4 +127,4 @@ const Task tasks[]={
 	{.task=test_sm4_gcm,.after=NULL,.before=NULL},
 	{.task=test_sm4_gcm_dec,.after=NULL,.before=NULL}
 };
-int tasks_len=12;
+int tasks_len=3;
