@@ -1,4 +1,4 @@
-#include <myy/sm2.h>
+#include <myy/sm2_point.h>
 
 // static const BN_256 p  = {0xFFFFFFFEu,0xFFFFFFFFu,0xFFFFFFFFu,0xFFFFFFFFu,0xFFFFFFFFu,0x00000000u,0xFFFFFFFFu,0xFFFFFFFFu};
 // static const BN_256 n  = {0xFFFFFFFEu,0xFFFFFFFFu,0xFFFFFFFFu,0xFFFFFFFFu,0x7203DF6Bu,0x21C6052Bu,0x53BBF409u,0x39D54123u};
@@ -455,7 +455,7 @@ int sm2_point_from_bin(SM2_POINT* r, const uint8_t* dst){
 		if(sm2_point_is_on_cure(&t)){
 			bn_256_cpy(r->x,t.x);
 			bn_256_cpy(r->y,t.y);
-			return 0;
+			return 65;
 		}
 	}else if(dst[0]==0x02){//压缩 y是偶数
 		bn_256_from_bin(t.x,dst+1);
@@ -472,7 +472,7 @@ int sm2_point_from_bin(SM2_POINT* r, const uint8_t* dst){
 		if(sm2_point_is_on_cure(&t)){
 			bn_256_cpy(r->x,t.x);
 			bn_256_cpy(r->y,t.y);
-			return 0;
+			return 33;
 		}
 	}else if(dst[0]==0x03){//压缩 y是奇数
 		bn_256_from_bin(t.x,dst+1);
@@ -489,7 +489,7 @@ int sm2_point_from_bin(SM2_POINT* r, const uint8_t* dst){
 		if(sm2_point_is_on_cure(&t)){
 			bn_256_cpy(r->x,t.x);
 			bn_256_cpy(r->y,t.y);
-			return 0;
+			return 33;
 		}
 	}else if(dst[0]==0x06){//混合 y是偶数
 		bn_256_from_bin(t.x,dst+1);
@@ -498,7 +498,7 @@ int sm2_point_from_bin(SM2_POINT* r, const uint8_t* dst){
 			if(sm2_point_is_on_cure(&t)){
 				bn_256_cpy(r->x,t.x);
 				bn_256_cpy(r->y,t.y);
-				return 0;
+				return 33;
 			}
 		}
 	}else if(dst[0]==0x07){//混合 y是奇数
@@ -508,18 +508,19 @@ int sm2_point_from_bin(SM2_POINT* r, const uint8_t* dst){
 			if(sm2_point_is_on_cure(&t)){
 				bn_256_cpy(r->x,t.x);
 				bn_256_cpy(r->y,t.y);
-				return 0;
+				return 33;
 			}
 		}
 	}
-	return 1;
+	return 0;
 }
 
 int sm2_point_from_bin_mont(SM2_POINT* r, const uint8_t* dst){
 	SM2_POINT R;
-	if(!sm2_point_from_bin(&R,dst)){
+	int t;
+	if((t=sm2_point_from_bin(&R,dst))!=0){
 		sm2_point_to_mont(r,&R);
-		return 0;
+		return t;
 	}
-	return 1;
+	return 0;
 }
