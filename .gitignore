@@ -13,6 +13,6 @@ debug/*
 !debug/debug.c
 !debug/task.h
 !debug/task.c
-!debug/task2.c
+!debug/task*.c
 !debug/debug
 !debug/Makefile

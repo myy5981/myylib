@@ -37,37 +37,9 @@ static inline void right_rotate(RB_TREE* t,RB_NODE* x) {
 	x->p=y;
 }
 
-int rb_insert_node(RB_TREE* t, RB_NODE* n) {
-	n->left=NULL;n->right=NULL;n->p=NULL;
-	// 插入
-	if(t->root==NULL){
-		n->color=BLACK;
-		t->root=n;
-		return 0;
-	}
+void rb_insert_fixup(RB_TREE* t, RB_NODE* n) {
 	n->color=RED;
-	RB_NODE* x=t->root;
-	while(1){
-		if(n->key < x->key){
-			if(x->left==NULL){
-				n->p=x;
-				x->left=n;
-				break;
-			}
-			x=x->left;
-		}else if(n->key > x->key){
-			if(x->right==NULL){
-				n->p=x;
-				x->right=n;
-				break;
-			}
-			x=x->right;
-		}else{
-			x->value=n->value;
-			return 1;
-		}
-	}
-	// 调整
+	RB_NODE* x;
 	while(n->p!=NULL&&n->p->color==RED){
 		if(n->p==n->p->p->left){
 			x=n->p->p->right;
@@ -104,7 +76,7 @@ int rb_insert_node(RB_TREE* t, RB_NODE* n) {
 		}
 	}
 	t->root->color=BLACK;
-	return 0;
+	return;
 }
 
 static inline RB_NODE* rb_minimum(RB_NODE* root){
