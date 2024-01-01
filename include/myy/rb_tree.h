@@ -1,10 +1,13 @@
 #ifndef MYY_RBTREE_H
 #define MYY_RBTREE_H
 
+#include <myy/env.h>
 #include <stdint.h>
 
 #define RED 1
 #define BLACK 0
+
+__CPP_BEGIN
 
 /**
  * 使用本API时，需将RB_NODE置于希望使用红黑树管理的结构体首部：
@@ -75,5 +78,7 @@ extern void rb_insert_fixup(RB_TREE* t, RB_NODE* n);
  * 从t中移除n，必须保证n在t中，否则会导致段错误
 */
 extern void rb_remove_node(RB_TREE* t, RB_NODE* n);
+
+__CPP_END
 
 #endif

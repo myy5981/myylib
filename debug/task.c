@@ -39,6 +39,21 @@ int legal_rbtree(RB_NODE* root){
 	return lh;
 }
 
+int ctx_search(XXX_CTX_TREE* t, uint64_t k, uint64_t* v){
+	XXX_CTX* x = (XXX_CTX*)t->root;
+	while(x!=NULL){
+		if(k<x->key){
+			x=(XXX_CTX*)x->rbn.left;
+		}else if(k>x->key){
+			x=(XXX_CTX*)x->rbn.right;
+		}else{
+			*v=x->value;
+			return 0;
+		}
+	}
+	return 1;
+}
+
 int ctx_insert(XXX_CTX_TREE* t, XXX_CTX* ctx){
 	ctx->rbn.left=NULL;
 	ctx->rbn.right=NULL;
@@ -94,7 +109,7 @@ int before(){
 		r=r%(i+1);
 		temp=arr[i].key;
 		arr[i].key=arr[r].key;
-		arr[i].value=arr[i].value;
+		arr[i].value=arr[r].value;
 		arr[r].key=temp;
 		arr[r].value=temp;
 
@@ -116,6 +131,16 @@ void run(){
 	
 }
 
+void search(){
+	for (size_t i = 0; i < SIZE; i++)
+	{
+		uint64_t value;
+		ctx_search(&t,__index[i],&value);
+		//printf("r = %d, key = %d, value = %ld\n", r, __index[i], value);
+	}
+	
+}
+
 void delete(){
 	for (int i = 0; i < SIZE; i++)
 	{
@@ -127,6 +152,7 @@ void delete(){
 
 const Task tasks[]={
 	{.before=before,.task=run,.after=NULL},
+	{.before=NULL,.task=search,.after=NULL},
 	{.before=NULL,.task=delete,.after=NULL}
 };
-int tasks_len=2;
+int tasks_len=3;
