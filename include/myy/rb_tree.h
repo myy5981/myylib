@@ -19,7 +19,8 @@ __CPP_BEGIN
  * 	typedef RB_TREE XXX_CTX_MAP;
  * 如此一来指向RB_NODE的指针同时也是指向结构体的指针，若不放在结构体头则不可直接类型转换
  * 
- * 需要自行添加插入逻辑，这取决于调用者需求，以下是可供参考的插入方式（与普通二叉搜索树相同）：
+ * 需要自行添加插入逻辑，这取决于调用者需求，以下是可供参考的方式（与普通二叉搜索树相同）：
+ * 
  * 	int ctx_insert(XXX_CTX_TREE* t, XXX_CTX* ctx){
  * 		ctx->rbn.left=NULL;
  * 		ctx->rbn.right=NULL;
@@ -29,7 +30,7 @@ __CPP_BEGIN
  * 		if(x==NULL){
  * 			t->root=n;
  * 		}else{
- * 			while(1){
+ * 			for(;;){
  * 				if(ctx->key < ((XXX_CTX*)x)->key){
  * 					if(x->left==NULL){
  * 						n->p=x;
@@ -53,7 +54,37 @@ __CPP_BEGIN
  * 		rb_insert_fixup(t,(RB_NODE*)ctx);
  * 		return 0;
  * 	}
- * 	#define ctx_remove(t,ctx) rb_remove_node((RB_TREE*)(t), (RB_NODE*)(ctx))
+ * 	
+ * 	int ctx_search(XXX_CTX_TREE* t, uint64_t k, uint64_t* v){
+ * 		XXX_CTX* x = (XXX_CTX*)t->root;
+ * 		while(x!=NULL){
+ * 			if(k<x->key){
+ * 				x=(XXX_CTX*)x->rbn.left;
+ * 			}else if(k>x->key){
+ * 				x=(XXX_CTX*)x->rbn.right;
+ * 			}else{
+ * 				*v=x->value;
+ * 				return 0;
+ * 			}
+ * 		}
+ * 		return 1;
+ * 	}
+ * 	
+ * 	XXX_CTX* ctx_remove(XXX_CTX_TREE* t, uint64_t k){
+ * 		XXX_CTX* x = (XXX_CTX*)t->root;
+ * 		while(x!=NULL){
+ * 			if(k<x->key){
+ * 				x=(XXX_CTX*)x->rbn.left;
+ * 			}else if(k>x->key){
+ * 				x=(XXX_CTX*)x->rbn.right;
+ * 			}else{
+ * 				rb_remove_node(t,&(x->rbn));
+ * 				return x;
+ * 			}
+ * 		}
+ * 		return NULL;
+ * 	}
+ * 	
 */
 
 struct _RB_NODE{

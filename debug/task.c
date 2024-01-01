@@ -39,21 +39,6 @@ int legal_rbtree(RB_NODE* root){
 	return lh;
 }
 
-int ctx_search(XXX_CTX_TREE* t, uint64_t k, uint64_t* v){
-	XXX_CTX* x = (XXX_CTX*)t->root;
-	while(x!=NULL){
-		if(k<x->key){
-			x=(XXX_CTX*)x->rbn.left;
-		}else if(k>x->key){
-			x=(XXX_CTX*)x->rbn.right;
-		}else{
-			*v=x->value;
-			return 0;
-		}
-	}
-	return 1;
-}
-
 int ctx_insert(XXX_CTX_TREE* t, XXX_CTX* ctx){
 	ctx->rbn.left=NULL;
 	ctx->rbn.right=NULL;
@@ -63,7 +48,7 @@ int ctx_insert(XXX_CTX_TREE* t, XXX_CTX* ctx){
 	if(x==NULL){
 		t->root=n;
 	}else{
-		while(1){
+		for(;;){
 			if(ctx->key < ((XXX_CTX*)x)->key){
 				if(x->left==NULL){
 					n->p=x;
@@ -87,7 +72,36 @@ int ctx_insert(XXX_CTX_TREE* t, XXX_CTX* ctx){
 	rb_insert_fixup(t,(RB_NODE*)ctx);
 	return 0;
 }
-#define ctx_remove(t,ctx) rb_remove_node((RB_TREE*)(t), (RB_NODE*)(ctx))
+
+int ctx_search(XXX_CTX_TREE* t, uint64_t k, uint64_t* v){
+	XXX_CTX* x = (XXX_CTX*)t->root;
+	while(x!=NULL){
+		if(k<x->key){
+			x=(XXX_CTX*)x->rbn.left;
+		}else if(k>x->key){
+			x=(XXX_CTX*)x->rbn.right;
+		}else{
+			*v=x->value;
+			return 0;
+		}
+	}
+	return 1;
+}
+
+XXX_CTX* ctx_remove(XXX_CTX_TREE* t, uint64_t k){
+	XXX_CTX* x = (XXX_CTX*)t->root;
+	while(x!=NULL){
+		if(k<x->key){
+			x=(XXX_CTX*)x->rbn.left;
+		}else if(k>x->key){
+			x=(XXX_CTX*)x->rbn.right;
+		}else{
+			rb_remove_node(t,&(x->rbn));
+			return x;
+		}
+	}
+	return NULL;
+}
 
 #define SIZE 2000000
 XXX_CTX arr[SIZE];
@@ -102,16 +116,17 @@ int before(){
 		__index[i]=i;
 	}
 	uint32_t r;
-	uint64_t temp;int te;
+	// uint64_t temp;
+	int te;
 	for (int i = SIZE-1; i >= 0; i--)
 	{
-		rand_bytes((uint8_t*)&r,4);
-		r=r%(i+1);
-		temp=arr[i].key;
-		arr[i].key=arr[r].key;
-		arr[i].value=arr[r].value;
-		arr[r].key=temp;
-		arr[r].value=temp;
+		// rand_bytes((uint8_t*)&r,4);
+		// r=r%(i+1);
+		// temp=arr[i].key;
+		// arr[i].key=arr[r].key;
+		// arr[i].value=arr[r].value;
+		// arr[r].key=temp;
+		// arr[r].value=temp;
 
 		rand_bytes((uint8_t*)&r,4);
 		r=r%(i+1);
@@ -132,9 +147,9 @@ void run(){
 }
 
 void search(){
-	for (size_t i = 0; i < SIZE; i++)
+	uint64_t value;
+	for (int i = 0; i < SIZE; i++)
 	{
-		uint64_t value;
 		ctx_search(&t,__index[i],&value);
 		//printf("r = %d, key = %d, value = %ld\n", r, __index[i], value);
 	}
@@ -145,7 +160,7 @@ void delete(){
 	for (int i = 0; i < SIZE; i++)
 	{
 		//printf("remove %ld\n",arr[__index[i]].key);
-		ctx_remove(&t,&(arr[__index[i]]));
+		ctx_remove(&t,__index[i]);
 		//legal_rbtree(t.root);
 	}
 }
