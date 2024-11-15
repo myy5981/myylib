@@ -1,6 +1,6 @@
 default: build libtask.so
 
-libtask.so: task.c
+libtask.so: task3.c
 	gcc -m64 -Wall -Werror -I../include -L../lib -g --shared -fPIC $^ -o $@ -lmyy
 
 .PHONY: clean
