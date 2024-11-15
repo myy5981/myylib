@@ -25,7 +25,8 @@ OBJ = obj/endian.o\
 		obj/sm2_enc.o\
 		obj/sm2_sig.o\
 		obj/sm2_kex.o\
-		obj/rb_tree.o
+		obj/rb_tree.o\
+		obj/p_queue.o
 
 .PHONY: debug
 debug: CLEVEL = -g -fdiagnostics-color=always
