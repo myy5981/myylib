@@ -29,7 +29,7 @@ OBJ = obj/endian.o\
 		obj/p_queue.o
 
 .PHONY: debug
-debug: CLEVEL = -g -fdiagnostics-color=always
+debug: CLEVEL = -g -fdiagnostics-color=always -DMYY_DEBUG
 debug: $(.DEFAULT_GOAL)
 
 .PHONY: release

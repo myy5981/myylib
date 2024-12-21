@@ -3,7 +3,11 @@
 
 #include <myy/env.h>
 
+__CPP_BEGIN
+
 extern size_t pqueue_in(void* queue, size_t nitems, size_t size,const void* ele, int (*cmp)(const void *, const void *));
 extern size_t pqueue_out(void* queue, size_t nitems, size_t size, void* ele, int (*cmp)(const void *, const void *));
+
+__CPP_END
 
 #endif
