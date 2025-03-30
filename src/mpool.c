@@ -141,12 +141,14 @@ void mpool_free_1024b(MPOOL_1024B* pool, void* ptr) {
 
 void destory_mpool_1024b(MPOOL_1024B* pool) {
 	if (pool != NULL) {
-		MCHUNK_1024B* chunk = &(pool->root);
+		MCHUNK_1024B* chunk = &(pool->root.next_chunk);
 		while (chunk != NULL) {
 			MCHUNK_1024B* next = chunk->next_chunk;
 			mchunk_free_1024b(chunk);
 			chunk = next;
 		}
+		free(pool->root.free);
+		munmap(pool->root.m, pool->root.capacity * 1024);
 		free(pool);
 	}
 }
