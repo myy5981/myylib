@@ -72,8 +72,8 @@ static MCHUNK_1024B* new_mchunk_1024b(uint32_t capacity) {
 	}
 	chunk->capacity = capacity;
 	chunk->idx = capacity;
-	for (int i = capacity - 1; i >= 0; --i) {
-		chunk->free[i] = i;
+	for (int i = 0; i < capacity; ++i) {
+		chunk->free[i] = capacity - 1 - i;
 	}
 	chunk->next_chunk = NULL;
 	return chunk;
@@ -128,7 +128,7 @@ void mpool_free_1024b(MPOOL_1024B* pool, void* ptr) {
 			if (chunk != &(pool->root)) {	  // 如果不是第一块chunk
 				if (pool->free_chunk != NULL) {
 					// 如果有上一个未释放的chunk，把上一个的释放掉
-					pool->free_chunk_prv->next_chunk = pool->free_chunk;
+					pool->free_chunk_prv->next_chunk = pool->free_chunk->next_chunk;
 					mchunk_free_1024b(pool->free_chunk);
 				}
 				pool->free_chunk = chunk;
