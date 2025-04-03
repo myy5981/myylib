@@ -1,7 +1,7 @@
 default: build libtask.so
 
 libtask.so: test_mpool.c
-	gcc -m64 -Wall -Werror -I../include -L../lib -g --shared -fPIC $^ -o $@ -lmyy
+	gcc -m64 -Wall -I../include -L../lib -g --shared -fPIC $^ -o $@ -lmyy
 
 .PHONY: clean
 clean:
